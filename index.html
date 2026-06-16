@@ -234,6 +234,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 }
 .modal-fields .wide{flex-basis:100%;}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+.modal-help{color:var(--muted);font-size:.78rem;line-height:1.45;margin:-4px 0 12px;}
 .view-desc{color:var(--muted);font-size:.9rem;margin-bottom:22px;}
 
 /* ===== Generic Topic Tab (Core Java, Spring, etc.) ===== */
@@ -279,9 +280,9 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .nested-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;}
 .nested-row input{width:16px;height:16px;accent-color:var(--accent);}
 .nested-row span{font-size:.84rem;font-weight:650;}
-.add-subtopic-row{display:flex;gap:8px;margin-top:10px;}
+.add-subtopic-row{display:none;gap:8px;margin-top:10px;}
 .add-subtopic-row.closed{display:none;}
-.show-subtopic-form{margin-top:10px;}
+.show-subtopic-form{display:none;margin-top:10px;}
 .show-subtopic-form.closed{display:none;}
 .add-subtopic-row input,.add-topic-form input{flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:.84rem;}
 .add-topic-form{
@@ -1374,7 +1375,9 @@ function createDefaultState(){
     sdNotes: {},
     sdChaptersDone: {},
     sdItemsDone: {},
+    customSdItems: [],
     customTopics: {},
+    topicChildren: {},
     companyStatus: {},
     customCompanies: [],
     personalQA: [],
@@ -1422,14 +1425,25 @@ function migrateState(s){
   const defaults = createDefaultState();
   s = {...defaults, ...(s && typeof s === "object" ? s : {})};
   s.schemaVersion = STATE_SCHEMA_VERSION;
-  ["subtopicDone","dsaDone","dsaLog","notes","topicNotes","dsaNotes","dsaRevisions","dsaDifficulty","customDsaCategories","customDsaQuestions","sdNotes","sdChaptersDone","sdItemsDone","customTopics","companyStatus","userSubjects","edits"].forEach(key=>{
+  ["subtopicDone","dsaDone","dsaLog","notes","topicNotes","dsaNotes","dsaRevisions","dsaDifficulty","customDsaCategories","customDsaQuestions","sdNotes","sdChaptersDone","sdItemsDone","customTopics","topicChildren","companyStatus","userSubjects","edits"].forEach(key=>{
     if(!s[key] || typeof s[key] !== "object" || Array.isArray(s[key])) s[key] = defaults[key] || {};
   });
   Object.keys(defaults.edits).forEach(key=>{
     if(!s.edits[key] || typeof s.edits[key] !== "object" || Array.isArray(s.edits[key])) s.edits[key] = {};
   });
-  ["customCompanies","personalQA"].forEach(key=>{
+  ["customCompanies","personalQA","customSdItems"].forEach(key=>{
     if(!Array.isArray(s[key])) s[key] = [];
+  });
+  s.customSdItems.forEach((item, idx)=>{
+    if(!item.id) item.id = makeCustomId(item.name || `system-design-item-${idx + 1}`);
+    if(!item.section) item.section = "custom";
+  });
+  Object.keys(s.topicChildren || {}).forEach(parentKey=>{
+    if(!Array.isArray(s.topicChildren[parentKey])) s.topicChildren[parentKey] = [];
+    s.topicChildren[parentKey].forEach((child, idx)=>{
+      if(!child.id) child.id = makeCustomId(child.title || `subtopic-${idx + 1}`);
+      child.done = !!child.done;
+    });
   });
   s.personalQA.forEach((qa, idx)=>{
     if(!qa.id) qa.id = makeCustomId(qa.q || `personal-question-${idx + 1}`);
@@ -1863,10 +1877,13 @@ function getSubjectItems(topicKey){
   const builtIns = (topic.subtopics || []).map((title, idx)=>({
     key:topicBuiltInKey(topicKey, title),
     title:editedLabel("topicLabels", topicBuiltInKey(topicKey, title), title),
-    done: doneMap[topicBuiltInKey(topicKey, title)] ? 1 : 0,
-    total: 1,
-    pct: doneMap[topicBuiltInKey(topicKey, title)] ? 100 : 0
-  })).filter(item=>!isHidden("topicHidden", item.key));
+    children: state.topicChildren[topicBuiltInKey(topicKey, title)] || []
+  })).map(item=>{
+    const hasChildren = item.children.length > 0;
+    const total = hasChildren ? item.children.length : 1;
+    const done = hasChildren ? item.children.filter(st=>st.done).length : (doneMap[item.key] ? 1 : 0);
+    return {...item, done, total, pct: total ? Math.round((done/total)*100) : 0};
+  }).filter(item=>!isHidden("topicHidden", item.key));
   const custom = (state.customTopics[topicKey] || []).map((item, idx)=>{
     const total = item.subtopics && item.subtopics.length ? item.subtopics.length : 1;
     const done = item.subtopics && item.subtopics.length ? item.subtopics.filter(st=>st.done).length : (item.done ? 1 : 0);
@@ -1895,10 +1912,12 @@ function subjectProgressHTML(topicKey){
 }
 
 function systemDesignProgressHTML(){
+  const customItems = (state.customSdItems || []).filter(item=>!isHidden("sdHidden", `customsd::${item.id}`));
   const rows = [
     {label:"Book Chapters", done:SD_RESOURCES.book.chapters.filter(ch=>!isHidden("sdHidden", sdResourceKey("book", ch)) && state.sdChaptersDone[sdResourceKey("book", ch)]).length, total:SD_RESOURCES.book.chapters.filter(ch=>!isHidden("sdHidden", sdResourceKey("book", ch))).length},
     {label:"LLD Videos", done:SD_RESOURCES.lld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("lld", it.name)) && state.sdItemsDone[sdResourceKey("lld", it.name)]).length, total:SD_RESOURCES.lld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("lld", it.name))).length},
-    {label:"HLD Videos", done:SD_RESOURCES.hld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("hld", it.name)) && state.sdItemsDone[sdResourceKey("hld", it.name)]).length, total:SD_RESOURCES.hld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("hld", it.name))).length}
+    {label:"HLD Videos", done:SD_RESOURCES.hld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("hld", it.name)) && state.sdItemsDone[sdResourceKey("hld", it.name)]).length, total:SD_RESOURCES.hld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("hld", it.name))).length},
+    {label:"Custom", done:customItems.filter(item=>state.sdItemsDone[`customsd::${item.id}`]).length, total:customItems.length}
   ].map(r=>({...r, pct:r.total ? Math.round((r.done/r.total)*100) : 0}));
   return `
     <div class="compact-progress-card">
@@ -1950,7 +1969,11 @@ function renderTopicView(topicKey){
     const isOpen = !!openTopicNotePanels[noteKey];
     const linkOpen = !!(openTopicLinkInputs[noteKey] || note.link);
     const idSafe = noteKey.replaceAll("::","-");
-    const isDone = !!doneMap[noteKey];
+    const children = state.topicChildren[noteKey] || [];
+    const childTotal = children.length;
+    const childDone = children.filter(st=>st.done).length;
+    const itemPct = childTotal ? Math.round((childDone / childTotal) * 100) : (doneMap[noteKey] ? 100 : 0);
+    const isDone = childTotal ? childDone === childTotal && childTotal > 0 : !!doneMap[noteKey];
     return {idx, key:noteKey, html:`
     <div class="subtopic-card ${isDone?"done":""}" id="topic-card-${idSafe}" data-order-key="${noteKey}">
     <div class="subtopic-row expandable-row" data-note-key="${noteKey}">
@@ -1959,6 +1982,18 @@ function renderTopicView(topicKey){
       ${hasNote ? `<span class="note-dot">Notes saved</span>` : ""}
       ${editActionsHTML("topic-built-in", noteKey)}
     </div>
+    ${childTotal ? `<div class="subtopic-body">
+      <div class="subtopic-progress"><span style="--pct:${itemPct}%"></span></div>
+      <div class="nested-list">
+        ${children.map(child=>`
+          <label class="nested-row">
+            <input type="checkbox" class="topic-child-check" data-parent-key="${noteKey}" data-sub-id="${escapeAttr(child.id)}" ${child.done?"checked":""}>
+            <span>${escapeHTML(child.title)}</span>
+            ${editActionsHTML("topic-child", child.id, `data-parent-key="${escapeAttr(noteKey)}"`)}
+          </label>
+        `).join("")}
+      </div>
+    </div>` : ""}
     <div class="topic-note-panel ${isOpen?'open':''}">
       <textarea id="topicnotebody-${idSafe}" placeholder="Write the explanation, gotchas, examples, or interview notes for this topic...">${escapeHTML(note.body||"")}</textarea>
       <div class="link-chips">${noteLinksHTML(noteLinks, noteKey, "delete-topic-link")}</div>
@@ -1989,7 +2024,6 @@ function renderTopicView(topicKey){
     const isOpen = !!openTopicNotePanels[noteKey];
     const linkOpen = !!(openTopicLinkInputs[noteKey] || item.link);
     const idSafe = noteKey.replaceAll("::","-");
-    const subFormOpen = openSubtopicForms[noteKey] !== false;
     return {key:noteKey, html:`
     <div class="subtopic-card ${checked?"done":""}" id="topic-card-${idSafe}" data-order-key="${noteKey}">
       <div class="subtopic-row expandable-row" data-note-key="${noteKey}">
@@ -2008,12 +2042,6 @@ function renderTopicView(topicKey){
               ${editActionsHTML("custom-subtopic", st.id, `data-topic="${topicKey}" data-topic-id="${escapeAttr(item.id)}"`)}
             </label>
           `).join("")}
-        </div>
-        <button class="btn small secondary show-subtopic-form ${subFormOpen?'closed':''}" data-key="${noteKey}">Add subtopic</button>
-        <div class="add-subtopic-row ${subFormOpen?'':'closed'}">
-          <input type="text" id="new-subtopic-${topicKey}-${item.id}" placeholder="Add a subtopic inside ${escapeAttr(item.title)}">
-          <button class="btn small add-custom-subtopic" data-topic="${topicKey}" data-id="${escapeAttr(item.id)}">Add</button>
-          <button class="btn small secondary close-subtopic-form" data-key="${noteKey}">Close</button>
         </div>
       </div>
       <div class="topic-note-panel ${isOpen?'open':''}">
@@ -2084,9 +2112,27 @@ function bindSubtopicChecks(){
     cb.onchange = ()=>{
       const t = cb.dataset.topic, key = cb.dataset.key;
       if(!state.subtopicDone[t] || Array.isArray(state.subtopicDone[t])) state.subtopicDone[t] = {};
-      state.subtopicDone[t][key] = cb.checked;
+      const children = state.topicChildren[key] || [];
+      if(children.length){
+        children.forEach(child=>child.done = cb.checked);
+        state.subtopicDone[t][key] = children.every(child=>child.done);
+      } else {
+        state.subtopicDone[t][key] = cb.checked;
+      }
       save();
       renderPreservingScroll(()=>renderView(t));
+    };
+  });
+  document.querySelectorAll(".topic-child-check").forEach(cb=>{
+    cb.onchange = ()=>{
+      const parentKey = cb.dataset.parentKey;
+      const child = (state.topicChildren[parentKey] || []).find(st=>st.id === cb.dataset.subId);
+      if(!child) return;
+      child.done = cb.checked;
+      const topicKey = parentKey.split("::")[0];
+      state.subtopicDone[topicKey][parentKey] = (state.topicChildren[parentKey] || []).every(st=>st.done);
+      save();
+      renderPreservingScroll(()=>renderTopicView(topicKey));
     };
   });
 }
@@ -2257,11 +2303,7 @@ function bindTopicEditControls(topicKey){
     btn.onclick = (event)=>{
       event.stopPropagation();
       const current = state.edits.topicLabels[btn.dataset.id] || btn.closest(".subtopic-row")?.querySelector(".subtopic-title")?.textContent || "";
-      const next = prompt("Edit topic name", current);
-      if(!next || !next.trim()) return;
-      state.edits.topicLabels[btn.dataset.id] = next.trim();
-      save();
-      renderTopicView(topicKey);
+      openTopicEditDialog({topicKey, kind:"topic-built-in", id:btn.dataset.id, title:current});
     };
   });
   document.querySelectorAll(".delete-item[data-kind='topic-built-in']").forEach(btn=>{
@@ -2278,11 +2320,7 @@ function bindTopicEditControls(topicKey){
       event.stopPropagation();
       const item = findCustomTopic(topicKey, btn.dataset.id);
       if(!item) return;
-      const next = prompt("Edit topic name", item.title);
-      if(!next || !next.trim()) return;
-      item.title = next.trim();
-      save();
-      renderTopicView(topicKey);
+      openTopicEditDialog({topicKey, kind:"custom-topic", id:btn.dataset.id, title:item.title});
     };
   });
   document.querySelectorAll(".delete-item[data-kind='custom-topic']").forEach(btn=>{
@@ -2318,6 +2356,35 @@ function bindTopicEditControls(topicKey){
       renderTopicView(topicKey);
     };
   });
+  document.querySelectorAll(".edit-item[data-kind='topic-child']").forEach(btn=>{
+    btn.onclick = (event)=>{
+      event.stopPropagation();
+      const parentKey = btn.dataset.parentKey;
+      const child = (state.topicChildren[parentKey] || []).find(st=>st.id === btn.dataset.id);
+      if(!child) return;
+      const next = prompt("Edit subtopic name", child.title);
+      if(!next || !next.trim()) return;
+      child.title = next.trim();
+      save();
+      renderPreservingScroll(()=>renderTopicView(topicKey));
+    };
+  });
+  document.querySelectorAll(".delete-item[data-kind='topic-child']").forEach(btn=>{
+    btn.onclick = (event)=>{
+      event.stopPropagation();
+      if(!confirm("Delete this subtopic?")) return;
+      const parentKey = btn.dataset.parentKey;
+      state.topicChildren[parentKey] = (state.topicChildren[parentKey] || []).filter(st=>st.id !== btn.dataset.id);
+      if(state.topicChildren[parentKey].length){
+        state.subtopicDone[topicKey][parentKey] = state.topicChildren[parentKey].every(st=>st.done);
+      } else {
+        delete state.topicChildren[parentKey];
+        state.subtopicDone[topicKey][parentKey] = false;
+      }
+      save();
+      renderPreservingScroll(()=>renderTopicView(topicKey));
+    };
+  });
 }
 
 function autoResizeTextareas(){
@@ -2340,6 +2407,62 @@ function markNearestSaveButtonDirty(input){
 
 function clearSaveButtonDirty(button){
   button?.classList.remove("unsaved");
+}
+
+function openTopicEditDialog({topicKey, kind, id, title, parentKey=""}){
+  const isBuiltIn = kind === "topic-built-in";
+  const isCustom = kind === "custom-topic";
+  if(!isBuiltIn && !isCustom) return;
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay open";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <button class="modal-close" type="button" title="Close">×</button>
+      <h3>Edit topic</h3>
+      <p class="modal-help">Rename this topic, or add a child subtopic under it. Leave a field blank when you do not want to change it.</p>
+      <div class="modal-fields">
+        <input class="wide" type="text" id="editTopicTitle" value="${escapeAttr(title)}" placeholder="Topic name">
+        <input class="wide" type="text" id="editTopicChild" placeholder="New subtopic optional">
+      </div>
+      <div class="modal-actions">
+        <button class="btn small secondary" type="button" id="cancelTopicEdit">Cancel</button>
+        <button class="btn small" type="button" id="saveTopicEdit">Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=>overlay.remove();
+  overlay.querySelector(".modal-close").onclick = close;
+  overlay.querySelector("#cancelTopicEdit").onclick = close;
+  overlay.onclick = event=>{ if(event.target === overlay) close(); };
+  overlay.querySelector("#editTopicTitle").focus();
+  overlay.querySelector("#saveTopicEdit").onclick = ()=>{
+    const nextTitle = overlay.querySelector("#editTopicTitle").value.trim();
+    const childTitle = overlay.querySelector("#editTopicChild").value.trim();
+    if(nextTitle){
+      if(isBuiltIn) state.edits.topicLabels[id] = nextTitle;
+      else {
+        const item = findCustomTopic(topicKey, id);
+        if(item) item.title = nextTitle;
+      }
+    }
+    if(childTitle){
+      if(isBuiltIn){
+        if(!Array.isArray(state.topicChildren[id])) state.topicChildren[id] = [];
+        state.topicChildren[id].push({id:makeCustomId(childTitle), title:childTitle, done:false});
+        state.subtopicDone[topicKey][id] = false;
+      } else {
+        const item = findCustomTopic(topicKey, id);
+        if(item){
+          if(!Array.isArray(item.subtopics)) item.subtopics = [];
+          item.subtopics.push({id:makeCustomId(childTitle), title:childTitle, done:false});
+          item.done = false;
+        }
+      }
+    }
+    save();
+    close();
+    renderPreservingScroll(()=>renderTopicView(topicKey));
+  };
 }
 
 /* ========================= NOTES PANEL (shared, topic-level) ========================= */
@@ -2465,6 +2588,24 @@ function addDsaQuestionControlHTML(){
         </select>
         <input class="wide" type="text" id="newDsaLink" placeholder="YouTube link optional">
         <button class="btn small" id="addDsaQuestionBtn">Add Question</button>
+      </div>
+    </details>`;
+}
+
+function addSystemDesignControlHTML(){
+  return `
+    <details class="add-control">
+      <summary title="Create System Design item">Create</summary>
+      <div class="add-popover">
+        <input class="wide" type="text" id="newSdName" placeholder="Resource or topic name">
+        <select id="newSdSection">
+          <option value="book">Book</option>
+          <option value="lld">LLD</option>
+          <option value="hld">HLD</option>
+          <option value="custom" selected>Custom</option>
+        </select>
+        <input class="wide" type="text" id="newSdLink" placeholder="Link optional">
+        <button class="btn small" id="addSdItemBtn">Add Item</button>
       </div>
     </details>`;
 }
@@ -3121,6 +3262,7 @@ function renderSystemDesignView(){
   const visibleBook = SD_RESOURCES.book.chapters.filter(ch=>!isHidden("sdHidden", sdResourceKey("book", ch)));
   const visibleLld = SD_RESOURCES.lld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("lld", it.name)));
   const visibleHld = SD_RESOURCES.hld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("hld", it.name)));
+  const visibleCustomSd = (state.customSdItems || []).filter(item=>!isHidden("sdHidden", `customsd::${item.id}`));
   const bookTotal = visibleBook.length;
   const bookDone = visibleBook.filter(ch=>state.sdChaptersDone[sdResourceKey("book", ch)]).length;
 
@@ -3130,12 +3272,15 @@ function renderSystemDesignView(){
   const hldTotal = visibleHld.length;
   const hldDone = visibleHld.filter(it=>state.sdItemsDone[sdResourceKey("hld", it.name)]).length;
 
-  const grandTotal = bookTotal + lldTotal + hldTotal;
-  const grandDone = bookDone + lldDone + hldDone;
+  const customTotal = visibleCustomSd.length;
+  const customDone = visibleCustomSd.filter(item=>state.sdItemsDone[`customsd::${item.id}`]).length;
+
+  const grandTotal = bookTotal + lldTotal + hldTotal + customTotal;
+  const grandDone = bookDone + lldDone + hldDone + customDone;
   const pct = grandTotal ? Math.round((grandDone/grandTotal)*100) : 0;
 
-  function resourceRowHTML(prefix, idx, name, link, checked){
-    const key = sdResourceKey(prefix, name);
+  function resourceRowHTML(prefix, idx, name, link, checked, keyOverride="", custom=false){
+    const key = keyOverride || sdResourceKey(prefix, name);
     if(isHidden("sdHidden", key)) return "";
     const displayName = editedLabel("sdLabels", key, name);
     const note = state.sdNotes[key] || {};
@@ -3153,7 +3298,7 @@ function renderSystemDesignView(){
         <span class="resource-actions">
           ${hasNote ? `<span class="note-dot">Notes saved</span>` : ""}
           ${link ? `<a href="${link}" target="_blank" class="ytlink">Watch</a>` : ""}
-          ${editActionsHTML("sd-resource", key)}
+          ${editActionsHTML(custom ? "sd-custom-resource" : "sd-resource", key)}
         </span>
       </div>
       <div class="resource-note-panel ${isOpen?'open':''}">
@@ -3185,7 +3330,7 @@ function renderSystemDesignView(){
         <h2 class="view-title">System Design</h2>
         <div class="view-desc">Book: <i>System Design Interview — An Insider's Guide (Alex Xu, Vol 1)</i> + Low Level Design & High Level Design playlists.</div>
       </div>
-      <div class="view-header-actions">${editModeButtonHTML()}</div>
+      <div class="view-header-actions">${addSystemDesignControlHTML()}${editModeButtonHTML()}</div>
     </div>
 
     <div class="topic-workspace">
@@ -3194,7 +3339,8 @@ function renderSystemDesignView(){
         ${jumpTabsHTML([
           {id:"sd-book", label:"Book"},
           {id:"sd-lld", label:"LLD"},
-          {id:"sd-hld", label:"HLD"}
+          {id:"sd-hld", label:"HLD"},
+          {id:"sd-custom", label:"Custom"}
         ])}
         <section class="category-section" id="sd-book">
           <h3 class="category-title">${SD_RESOURCES.book.label}<span>${bookTotal} chapters</span></h3>
@@ -3217,6 +3363,12 @@ function renderSystemDesignView(){
           <h3 class="category-title">${SD_RESOURCES.hld.label}<span>${hldTotal} items</span></h3>
           <div class="resource-list">
             ${resourceListHTML("hld", SD_RESOURCES.hld.items, state.sdItemsDone, it=>it.name)}
+          </div>
+        </section>
+        <section class="category-section" id="sd-custom">
+          <h3 class="category-title">Custom System Design<span>${customTotal} items</span></h3>
+          <div class="resource-list">
+            ${visibleCustomSd.map((item, idx)=>resourceRowHTML(item.section || "custom", idx, item.name, item.link || "", !!state.sdItemsDone[`customsd::${item.id}`], `customsd::${item.id}`, true)).join("") || `<div class="empty" style="padding:18px;">Create your first custom System Design item.</div>`}
           </div>
         </section>
       </div>
@@ -3243,13 +3395,29 @@ function renderSystemDesignView(){
 
   bindSystemDesignInlineNotes();
   bindSystemDesignEditControls();
+  bindCreateSystemDesignItem();
   bindEditModeToggle(renderSystemDesignView);
   bindJumpTabs();
   bindPageSearch("systemdesign", [
     ...SD_RESOURCES.book.chapters.map(label=>{ const key = sdResourceKey("book", label); if(isHidden("sdHidden", key)) return null; return {label:`Book: ${editedLabel("sdLabels", key, label)}`, id:`sd-card-${key.replaceAll("::","-")}`, open:()=>{openSdNotePanels[key]=true; renderSystemDesignView();}}; }),
     ...SD_RESOURCES.lld.items.map(it=>{ const key = sdResourceKey("lld", it.name); if(isHidden("sdHidden", key)) return null; return {label:`LLD: ${editedLabel("sdLabels", key, it.name)}`, id:`sd-card-${key.replaceAll("::","-")}`, open:()=>{openSdNotePanels[key]=true; renderSystemDesignView();}}; }),
-    ...SD_RESOURCES.hld.items.map(it=>{ const key = sdResourceKey("hld", it.name); if(isHidden("sdHidden", key)) return null; return {label:`HLD: ${editedLabel("sdLabels", key, it.name)}`, id:`sd-card-${key.replaceAll("::","-")}`, open:()=>{openSdNotePanels[key]=true; renderSystemDesignView();}}; })
+    ...SD_RESOURCES.hld.items.map(it=>{ const key = sdResourceKey("hld", it.name); if(isHidden("sdHidden", key)) return null; return {label:`HLD: ${editedLabel("sdLabels", key, it.name)}`, id:`sd-card-${key.replaceAll("::","-")}`, open:()=>{openSdNotePanels[key]=true; renderSystemDesignView();}}; }),
+    ...(state.customSdItems || []).map(item=>{ const key = `customsd::${item.id}`; if(isHidden("sdHidden", key)) return null; return {label:`Custom: ${editedLabel("sdLabels", key, item.name)}`, id:`sd-card-${key.replaceAll("::","-")}`, open:()=>{openSdNotePanels[key]=true; renderSystemDesignView();}}; })
   ].filter(Boolean));
+}
+
+function bindCreateSystemDesignItem(){
+  const btn = document.getElementById("addSdItemBtn");
+  if(!btn) return;
+  btn.onclick = ()=>{
+    const name = document.getElementById("newSdName")?.value.trim();
+    const section = document.getElementById("newSdSection")?.value || "custom";
+    const link = document.getElementById("newSdLink")?.value.trim() || "";
+    if(!name) return;
+    state.customSdItems.push({id:makeCustomId(name), name, section, link});
+    save();
+    renderPreservingScroll(renderSystemDesignView);
+  };
 }
 
 function bindSystemDesignEditControls(){
@@ -3271,6 +3439,30 @@ function bindSystemDesignEditControls(){
       state.edits.sdHidden[btn.dataset.id] = true;
       save();
       renderSystemDesignView();
+    };
+  });
+  document.querySelectorAll(".edit-item[data-kind='sd-custom-resource']").forEach(btn=>{
+    btn.onclick = (event)=>{
+      event.stopPropagation();
+      const item = (state.customSdItems || []).find(it=>`customsd::${it.id}` === btn.dataset.id);
+      if(!item) return;
+      const next = prompt("Edit System Design item", item.name);
+      if(!next || !next.trim()) return;
+      item.name = next.trim();
+      save();
+      renderPreservingScroll(renderSystemDesignView);
+    };
+  });
+  document.querySelectorAll(".delete-item[data-kind='sd-custom-resource']").forEach(btn=>{
+    btn.onclick = (event)=>{
+      event.stopPropagation();
+      if(!confirm("Delete this custom System Design item?")) return;
+      const id = btn.dataset.id.replace(/^customsd::/, "");
+      state.customSdItems = (state.customSdItems || []).filter(item=>item.id !== id);
+      delete state.sdItemsDone[btn.dataset.id];
+      delete state.sdNotes[btn.dataset.id];
+      save();
+      renderPreservingScroll(renderSystemDesignView);
     };
   });
 }
