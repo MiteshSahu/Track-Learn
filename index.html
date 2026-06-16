@@ -266,6 +266,8 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
   background:var(--panel);border:1px solid var(--border);
   border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
 }
+.subtopic-card.dragging,.q-card.dragging{opacity:.45;}
+.subtopic-card[draggable="true"],.q-card[draggable="true"]{cursor:grab;}
 .subtopic-card.done{border-color:#88d29a;background:#fbfffb;}
 .subtopic-row{box-shadow:none;border:0;border-radius:0;}
 .subtopic-row .subtopic-title{flex:1;font-size:.9rem;font-weight:700;line-height:1.45;}
@@ -278,6 +280,9 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .nested-row input{width:16px;height:16px;accent-color:var(--accent);}
 .nested-row span{font-size:.84rem;font-weight:650;}
 .add-subtopic-row{display:flex;gap:8px;margin-top:10px;}
+.add-subtopic-row.closed{display:none;}
+.show-subtopic-form{margin-top:10px;}
+.show-subtopic-form.closed{display:none;}
 .add-subtopic-row input,.add-topic-form input{flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:.84rem;}
 .add-topic-form{
   background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
@@ -392,6 +397,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border);}
 .btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
 .btn.small{padding:6px 12px;font-size:.75rem;}
+.btn.unsaved{background:#f4b83f;color:#132018;border-color:#d59b19;}
 .notes-list{flex:1;display:flex;flex-direction:column;gap:10px;margin-top:8px;}
 .note-item{
   background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;
@@ -1383,7 +1389,9 @@ function createDefaultState(){
       sdLabels: {},
       sdHidden: {},
       companyLabels: {},
-      companyHidden: {}
+      companyHidden: {},
+      topicOrder: {},
+      dsaQuestionOrder: {}
     }
   };
   Object.keys(TOPICS).forEach(key=>{
@@ -1498,6 +1506,7 @@ let jsonWriteTimer = null;
 let supabaseClient = null;
 let currentUser = null;
 let editMode = false;
+let openSubtopicForms = {};
 function editModeButtonHTML(){
   return `<button class="edit-mode-toggle ${editMode?'active':''}" id="toggleEditMode">${editMode?'Done':'Edit'}</button>`;
 }
@@ -1521,6 +1530,50 @@ function editedLabel(bucket, key, fallback){
 }
 function isHidden(bucket, key){
   return !!state.edits?.[bucket]?.[key];
+}
+function applySavedOrder(items, order, getKey){
+  if(!Array.isArray(order) || !order.length) return items;
+  const rank = new Map(order.map((key, idx)=>[key, idx]));
+  return [...items].sort((a,b)=>{
+    const ak = getKey(a), bk = getKey(b);
+    const ar = rank.has(ak) ? rank.get(ak) : Number.MAX_SAFE_INTEGER;
+    const br = rank.has(bk) ? rank.get(bk) : Number.MAX_SAFE_INTEGER;
+    return ar === br ? 0 : ar - br;
+  });
+}
+function bindDragReorder(containerSelector, itemSelector, onOrder){
+  const containers = document.querySelectorAll(containerSelector);
+  containers.forEach(container=>{
+    let dragged = null;
+    container.querySelectorAll(itemSelector).forEach(item=>{
+      item.draggable = true;
+      item.addEventListener("dragstart", event=>{
+        if(event.target.closest("textarea,input,button,a,select")) {
+          event.preventDefault();
+          return;
+        }
+        dragged = item;
+        item.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+      });
+      item.addEventListener("dragend", ()=>{
+        item.classList.remove("dragging");
+        dragged = null;
+        const order = [...container.querySelectorAll(itemSelector)].map(el=>el.dataset.orderKey).filter(Boolean);
+        onOrder(order, container);
+      });
+    });
+    container.addEventListener("dragover", event=>{
+      if(!dragged) return;
+      event.preventDefault();
+      const after = [...container.querySelectorAll(`${itemSelector}:not(.dragging)`)].find(el=>{
+        const box = el.getBoundingClientRect();
+        return event.clientY < box.top + box.height / 2;
+      });
+      if(after) container.insertBefore(dragged, after);
+      else container.appendChild(dragged);
+    });
+  });
 }
 function getDsaCategoryKeys(){
   const builtIns = DSA_TAB_TOPICS.filter(cat=>!isHidden("dsaCategoryHidden", cat));
@@ -1662,9 +1715,15 @@ async function bindSupabaseAuth(){
   const {data} = await client.auth.getSession();
   currentUser = data.session?.user || null;
   updateAuthButton();
-  client.auth.onAuthStateChange((_event, session)=>{
-    currentUser = session?.user || null;
+  client.auth.onAuthStateChange((event, session)=>{
+    const nextUser = session?.user || null;
+    const sameUser = (currentUser?.id || null) === (nextUser?.id || null);
+    currentUser = nextUser;
     updateAuthButton();
+    if(sameUser && (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION" || event === "SIGNED_IN")){
+      setJsonStatus(currentUser ? "Supabase synced" : "Sign in to sync");
+      return;
+    }
     loadRemoteState();
   });
   if(btn){
@@ -1892,8 +1951,8 @@ function renderTopicView(topicKey){
     const linkOpen = !!(openTopicLinkInputs[noteKey] || note.link);
     const idSafe = noteKey.replaceAll("::","-");
     const isDone = !!doneMap[noteKey];
-    return {idx, html:`
-    <div class="subtopic-card ${isDone?"done":""}" id="topic-card-${idSafe}">
+    return {idx, key:noteKey, html:`
+    <div class="subtopic-card ${isDone?"done":""}" id="topic-card-${idSafe}" data-order-key="${noteKey}">
     <div class="subtopic-row expandable-row" data-note-key="${noteKey}">
       <input type="checkbox" data-topic="${topicKey}" data-key="${noteKey}" class="subtopic-check" ${isDone?"checked":""}>
       <label class="subtopic-title ${isDone?"done":""}">${escapeHTML(displayTitle)}</label>
@@ -1915,9 +1974,10 @@ function renderTopicView(topicKey){
   `};
   }).filter(Boolean);
 
-  let topicsHTML = categorizedTopicHTML(topicKey, builtInCards);
+  const orderedBuiltInCards = applySavedOrder(builtInCards, state.edits.topicOrder?.[topicKey], item=>item.key);
+  let topicsHTML = categorizedTopicHTML(topicKey, orderedBuiltInCards);
 
-  topicsHTML += state.customTopics[topicKey].map((item,idx)=>{
+  const customTopicCards = state.customTopics[topicKey].map((item,idx)=>{
     const noteKey = `${topicKey}::custom::${item.id}`;
     const hasChildren = item.subtopics && item.subtopics.length;
     const itemTotal = hasChildren ? item.subtopics.length : 1;
@@ -1929,8 +1989,9 @@ function renderTopicView(topicKey){
     const isOpen = !!openTopicNotePanels[noteKey];
     const linkOpen = !!(openTopicLinkInputs[noteKey] || item.link);
     const idSafe = noteKey.replaceAll("::","-");
-    return `
-    <div class="subtopic-card ${checked?"done":""}" id="topic-card-${idSafe}">
+    const subFormOpen = openSubtopicForms[noteKey] !== false;
+    return {key:noteKey, html:`
+    <div class="subtopic-card ${checked?"done":""}" id="topic-card-${idSafe}" data-order-key="${noteKey}">
       <div class="subtopic-row expandable-row" data-note-key="${noteKey}">
         <input type="checkbox" class="custom-topic-check" data-topic="${topicKey}" data-id="${escapeAttr(item.id)}" ${checked?"checked":""}>
         <label class="subtopic-title ${checked?"done":""}">${escapeHTML(item.title)}</label>
@@ -1948,9 +2009,11 @@ function renderTopicView(topicKey){
             </label>
           `).join("")}
         </div>
-        <div class="add-subtopic-row">
+        <button class="btn small secondary show-subtopic-form ${subFormOpen?'closed':''}" data-key="${noteKey}">Add subtopic</button>
+        <div class="add-subtopic-row ${subFormOpen?'':'closed'}">
           <input type="text" id="new-subtopic-${topicKey}-${item.id}" placeholder="Add a subtopic inside ${escapeAttr(item.title)}">
           <button class="btn small add-custom-subtopic" data-topic="${topicKey}" data-id="${escapeAttr(item.id)}">Add</button>
+          <button class="btn small secondary close-subtopic-form" data-key="${noteKey}">Close</button>
         </div>
       </div>
       <div class="topic-note-panel ${isOpen?'open':''}">
@@ -1964,8 +2027,9 @@ function renderTopicView(topicKey){
           <button class="btn small secondary close-topic-note" data-key="${noteKey}">Close</button>
         </div>
       </div>
-    </div>`;
-  }).join("");
+    </div>`};
+  });
+  topicsHTML += applySavedOrder(customTopicCards, state.edits.topicOrder?.[topicKey], item=>item.key).map(item=>item.html).join("");
 
   main.innerHTML = `
   <div class="view active">
@@ -2034,14 +2098,14 @@ function bindTopicInlineNotes(){
       const key = row.dataset.noteKey;
       openTopicNotePanels[key] = !openTopicNotePanels[key];
       const topicKey = key.split("::")[0];
-      renderTopicView(topicKey);
+      renderPreservingScroll(()=>renderTopicView(topicKey));
     };
   });
   document.querySelectorAll(".close-topic-note").forEach(btn=>{
     btn.onclick = ()=>{
       const key = btn.dataset.key;
       openTopicNotePanels[key] = false;
-      renderTopicView(key.split("::")[0]);
+      renderPreservingScroll(()=>renderTopicView(key.split("::")[0]));
     };
   });
   document.querySelectorAll(".save-topic-note").forEach(btn=>{
@@ -2058,7 +2122,8 @@ function bindTopicInlineNotes(){
       }
       save();
       openTopicNotePanels[key] = true;
-      renderTopicView(key.split("::")[0]);
+      clearSaveButtonDirty(btn);
+      renderPreservingScroll(()=>renderTopicView(key.split("::")[0]));
     };
   });
   document.querySelectorAll(".save-topic-link").forEach(btn=>{
@@ -2082,7 +2147,7 @@ function bindTopicInlineNotes(){
       save();
       openTopicNotePanels[key] = true;
       openTopicLinkInputs[key] = false;
-      renderTopicView(key.split("::")[0]);
+      renderPreservingScroll(()=>renderTopicView(key.split("::")[0]));
     };
   });
   document.querySelectorAll(".delete-topic-link").forEach(btn=>{
@@ -2099,14 +2164,14 @@ function bindTopicInlineNotes(){
         state.topicNotes[key] = note;
       }
       save();
-      renderTopicView(key.split("::")[0]);
+      renderPreservingScroll(()=>renderTopicView(key.split("::")[0]));
     };
   });
   document.querySelectorAll(".add-topic-link").forEach(btn=>{
     btn.onclick = ()=>{
       const key = btn.dataset.key;
       openTopicLinkInputs[key] = !openTopicLinkInputs[key];
-      renderTopicView(key.split("::")[0]);
+      renderPreservingScroll(()=>renderTopicView(key.split("::")[0]));
     };
   });
   document.querySelectorAll(".expand-topic-note").forEach(btn=>{
@@ -2166,8 +2231,24 @@ function bindCustomTopicControls(topicKey){
       item.subtopics.push({id:makeCustomId(title), title, done:false});
       item.done = false;
       save();
-      renderTopicView(topicKey);
+      renderPreservingScroll(()=>renderTopicView(topicKey));
     };
+  });
+  document.querySelectorAll(".close-subtopic-form").forEach(btn=>{
+    btn.onclick = ()=>{
+      openSubtopicForms[btn.dataset.key] = false;
+      renderPreservingScroll(()=>renderTopicView(topicKey));
+    };
+  });
+  document.querySelectorAll(".show-subtopic-form").forEach(btn=>{
+    btn.onclick = ()=>{
+      openSubtopicForms[btn.dataset.key] = true;
+      renderPreservingScroll(()=>renderTopicView(topicKey));
+    };
+  });
+  bindDragReorder(".subtopic-list", ".subtopic-card", order=>{
+    state.edits.topicOrder[topicKey] = order;
+    save();
   });
 }
 
@@ -2246,8 +2327,19 @@ function autoResizeTextareas(){
     area.oninput = ()=> {
       area.style.height = "auto";
       area.style.height = `${area.scrollHeight + 2}px`;
+      markNearestSaveButtonDirty(area);
     };
   });
+}
+
+function markNearestSaveButtonDirty(input){
+  const panel = input.closest(".q-note-panel,.topic-note-panel,.resource-note-panel");
+  const btn = panel?.querySelector(".save-q-note,.save-topic-note,.save-sd-note");
+  if(btn) btn.classList.add("unsaved");
+}
+
+function clearSaveButtonDirty(button){
+  button?.classList.remove("unsaved");
 }
 
 /* ========================= NOTES PANEL (shared, topic-level) ========================= */
@@ -2472,7 +2564,7 @@ function getDsaQuestionItems(cat){
       custom:true
     };
   });
-  return [...builtIn, ...custom];
+  return applySavedOrder([...builtIn, ...custom], state.edits.dsaQuestionOrder?.[cat], item=>item.key);
 }
 
 function allDsaQuestionItems(){
@@ -2687,7 +2779,7 @@ function renderDsaQuestions(){
     const items = getDsaQuestionItems(catKey);
     const doneCount = items.filter(item=>state.dsaDone[item.key]).length;
     return `
-    <section class="dsa-section" id="dsa-${catKey}">
+    <section class="dsa-section" id="dsa-${catKey}" data-cat="${catKey}">
       <div class="section-title-row">
         <h3 class="dsa-section-title">${getDsaCategoryLabel(catKey)} <span style="color:var(--muted);font-family:var(--mono);font-size:.78rem;">${doneCount}/${items.length}</span></h3>
         ${editActionsHTML("dsa-category", catKey)}
@@ -2704,7 +2796,7 @@ function renderDsaQuestions(){
     const linkOpen = !!openDsaLinkInputs[key];
 
     return `
-    <div class="q-card ${doneInfo?"done":""}" id="dsa-card-${key.replaceAll('::','-')}">
+    <div class="q-card ${doneInfo?"done":""}" id="dsa-card-${key.replaceAll('::','-')}" data-order-key="${key}">
       <div class="q-row expandable-q-row" data-key="${key}">
         <input type="checkbox" class="dsa-check" data-key="${key}" ${doneInfo?"checked":""}>
         <div class="qname ${doneInfo?"done":""}">${escapeHTML(item.title)}</div>
@@ -2795,7 +2887,7 @@ function renderDsaQuestions(){
       if(event.target.closest("input, button, a")) return;
       const key = row.dataset.key;
       openNotePanels[key] = !openNotePanels[key];
-      renderDsaQuestions();
+      renderPreservingScroll(renderDsaQuestions);
       autoResizeTextareas();
     };
   });
@@ -2803,7 +2895,7 @@ function renderDsaQuestions(){
     btn.onclick = ()=>{
       const key = btn.dataset.key;
       openNotePanels[key] = false;
-      renderDsaQuestions();
+      renderPreservingScroll(renderDsaQuestions);
     };
   });
   document.querySelectorAll(".save-q-note").forEach(btn=>{
@@ -2813,7 +2905,8 @@ function renderDsaQuestions(){
       const body = document.getElementById(`notebody-${idSafe}`).value.trim();
       state.dsaNotes[key] = {...normalizeNoteObject(state.dsaNotes[key]), body};
       save();
-      renderDsaQuestions();
+      clearSaveButtonDirty(btn);
+      renderPreservingScroll(renderDsaQuestions);
     };
   });
   document.querySelectorAll(".save-q-link").forEach(btn=>{
@@ -2829,7 +2922,7 @@ function renderDsaQuestions(){
       save();
       openNotePanels[key] = true;
       openDsaLinkInputs[key] = false;
-      renderDsaQuestions();
+      renderPreservingScroll(renderDsaQuestions);
     };
   });
   document.querySelectorAll(".delete-q-link").forEach(btn=>{
@@ -2840,14 +2933,14 @@ function renderDsaQuestions(){
       note.links.splice(idx,1);
       state.dsaNotes[key] = note;
       save();
-      renderDsaQuestions();
+      renderPreservingScroll(renderDsaQuestions);
     };
   });
   document.querySelectorAll(".add-q-link").forEach(btn=>{
     btn.onclick = ()=>{
       const key = btn.dataset.key;
       openDsaLinkInputs[key] = !openDsaLinkInputs[key];
-      renderDsaQuestions();
+      renderPreservingScroll(renderDsaQuestions);
       autoResizeTextareas();
     };
   });
@@ -2857,6 +2950,12 @@ function renderDsaQuestions(){
       btn.textContent = btn.closest(".q-note-panel").classList.contains("note-expanded") ? "Collapse" : "Expand";
       autoResizeTextareas();
     };
+  });
+  bindDragReorder(".dsa-section", ".q-card", (order, section)=>{
+    const cat = section.dataset.cat;
+    if(!cat) return;
+    state.edits.dsaQuestionOrder[cat] = order;
+    save();
   });
   bindDsaEditControls();
   autoResizeTextareas();
@@ -3182,13 +3281,13 @@ function bindSystemDesignInlineNotes(){
       if(event.target.closest("input, button, a")) return;
       const key = row.dataset.key;
       openSdNotePanels[key] = !openSdNotePanels[key];
-      renderSystemDesignView();
+      renderPreservingScroll(renderSystemDesignView);
     };
   });
   document.querySelectorAll(".close-sd-note").forEach(btn=>{
     btn.onclick = ()=>{
       openSdNotePanels[btn.dataset.key] = false;
-      renderSystemDesignView();
+      renderPreservingScroll(renderSystemDesignView);
     };
   });
   document.querySelectorAll(".save-sd-note").forEach(btn=>{
@@ -3199,7 +3298,8 @@ function bindSystemDesignInlineNotes(){
       state.sdNotes[key] = {...normalizeNoteObject(state.sdNotes[key]), body};
       save();
       openSdNotePanels[key] = true;
-      renderSystemDesignView();
+      clearSaveButtonDirty(btn);
+      renderPreservingScroll(renderSystemDesignView);
     };
   });
   document.querySelectorAll(".save-sd-link").forEach(btn=>{
@@ -3215,7 +3315,7 @@ function bindSystemDesignInlineNotes(){
       save();
       openSdNotePanels[key] = true;
       openSdLinkInputs[key] = false;
-      renderSystemDesignView();
+      renderPreservingScroll(renderSystemDesignView);
     };
   });
   document.querySelectorAll(".delete-sd-link").forEach(btn=>{
@@ -3226,13 +3326,13 @@ function bindSystemDesignInlineNotes(){
       note.links.splice(idx,1);
       state.sdNotes[key] = note;
       save();
-      renderSystemDesignView();
+      renderPreservingScroll(renderSystemDesignView);
     };
   });
   document.querySelectorAll(".add-sd-link").forEach(btn=>{
     btn.onclick = ()=>{
       openSdLinkInputs[btn.dataset.key] = !openSdLinkInputs[btn.dataset.key];
-      renderSystemDesignView();
+      renderPreservingScroll(renderSystemDesignView);
     };
   });
   document.querySelectorAll(".expand-sd-note").forEach(btn=>{
