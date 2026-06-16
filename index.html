@@ -2032,7 +2032,7 @@ function renderTopicView(topicKey){
         ${hasNote ? `<span class="note-dot">Notes saved</span>` : ""}
         ${editActionsHTML("custom-topic", item.id, `data-topic="${topicKey}"`)}
       </div>
-      <div class="subtopic-body">
+      ${hasChildren ? `<div class="subtopic-body">
         <div class="subtopic-progress"><span style="--pct:${itemPct}%"></span></div>
         <div class="nested-list">
           ${(item.subtopics||[]).map((st,subIdx)=>`
@@ -2043,7 +2043,7 @@ function renderTopicView(topicKey){
             </label>
           `).join("")}
         </div>
-      </div>
+      </div>` : ""}
       <div class="topic-note-panel ${isOpen?'open':''}">
         <textarea id="topicnotebody-${idSafe}" placeholder="Write notes for this topic...">${escapeHTML(item.note||"")}</textarea>
         <div class="link-chips">${noteLinksHTML(itemLinks, noteKey, "delete-topic-link")}</div>
