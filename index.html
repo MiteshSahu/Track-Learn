@@ -923,7 +923,12 @@ const TOPICS = {
       "Optional class usage",
       "Comparable vs Comparator",
       "Serialization & Deserialization",
-      "Static, final, this/super keywords deep dive"
+      "Static, final, this/super keywords deep dive",
+      "Switch expressions vs traditional switch statements",
+      "Designing immutable classes (final fields, defensive copies, no mutators)",
+      "StringBuffer synchronization, performance & use cases",
+      "Object identity vs equality (== vs equals)",
+      "Optional get, orElse, orElseGet & orElseThrow behavior"
     ]
   },
   streams: {
@@ -939,7 +944,8 @@ const TOPICS = {
       "Infinite Streams (iterate, limit, takeWhile/dropWhile)",
       "Stream vs IntStream/LongStream/DoubleStream",
       "Common Stream interview problems (word frequency, grouping objects)",
-      "Lazy evaluation & short-circuiting operations"
+      "Lazy evaluation & short-circuiting operations",
+      "Group employees by department and find highest salary using Streams"
     ]
   },
   multithreading: {
@@ -979,7 +985,19 @@ const TOPICS = {
       "Microservices patterns with Spring Cloud",
       "Actuator & monitoring",
       "Caching (@Cacheable, Redis integration)",
-      "Testing (MockMvc, @SpringBootTest, Mockito)"
+      "Testing (MockMvc, @SpringBootTest, Mockito)",
+      "@Component vs @Service vs @Repository stereotypes",
+      "Circular dependencies: detection, causes & resolution",
+      "Scheduling and application-level rate limiting",
+      "Servlet Filters vs Spring MVC Interceptors",
+      "REST API versioning strategies",
+      "Monolith vs Microservices tradeoffs",
+      "Service Discovery & client-side load balancing",
+      "API Gateway responsibilities and routing",
+      "Synchronous REST vs asynchronous messaging",
+      "Circuit Breaker, Retry & Fallback patterns",
+      "Distributed tracing and correlation IDs",
+      "Centralized configuration management for microservices"
     ]
   },
   solid: {
@@ -1029,7 +1047,10 @@ const TOPICS = {
       "Transactions, ACID & isolation levels",
       "Views, Stored Procedures, Triggers",
       "Common SQL interview problems (Nth highest salary, duplicates, gaps & islands)",
-      "Query execution plan analysis"
+      "Query execution plan analysis",
+      "Optimistic vs Pessimistic Locking",
+      "Pagination strategies (offset vs keyset/cursor)",
+      "Database deadlocks: detection, prevention & recovery"
     ]
   },
   kafka: {
@@ -1281,7 +1302,22 @@ const SD_RESOURCES = {
     label: "High Level Design (14-video playlist + Alex Xu HLD)",
     items: [
       { name: "HLD Full Playlist (14 videos)", link: "https://youtu.be/3loACSxowRU" },
-      { name: "Alex Xu System Design Interview - Practice", link: "https://www.youtube.com/results?search_query=alex+xu+system+design+interview" }
+      { name: "Alex Xu System Design Interview - Practice", link: "https://www.youtube.com/results?search_query=alex+xu+system+design+interview" },
+      { name: "Caching strategies, invalidation & cache stampede prevention", link: "" },
+      { name: "Database scaling: read replicas, partitioning & sharding", link: "" },
+      { name: "Horizontal vs Vertical Scaling tradeoffs", link: "" },
+      { name: "CAP Theorem and consistency tradeoffs", link: "" },
+      { name: "Load Balancers and traffic distribution strategies", link: "" },
+      { name: "High Availability, failover & disaster recovery", link: "" },
+      { name: "Production scenario: application suddenly becomes slow", link: "" },
+      { name: "Production scenario: database CPU reaches 100 percent", link: "" },
+      { name: "Production scenario: memory leaks and high GC pauses", link: "" },
+      { name: "Production scenario: API latency increases after deployment", link: "" },
+      { name: "Production scenario: thread pool exhaustion", link: "" },
+      { name: "Production scenario: service-to-service communication failures", link: "" },
+      { name: "Production scenario: cache does not reduce database load", link: "" },
+      { name: "Production scenario: traffic spikes, backpressure & autoscaling", link: "" },
+      { name: "Production incident debugging with logs, metrics & traces", link: "" }
     ]
   }
 };
@@ -3777,20 +3813,9 @@ function renderPersonalView(){
 /* ========================= MASTER ROUTER ========================= */
 
 function getTopicProgress(topicKey){
-  const topic = TOPICS[topicKey];
-  const doneMap = state.subtopicDone[topicKey] || {};
-  const visibleBuiltIns = topic.subtopics.filter(title=>!isHidden("topicHidden", topicBuiltInKey(topicKey, title)));
-  let total = visibleBuiltIns.length;
-  let done = visibleBuiltIns.filter(title=>doneMap[topicBuiltInKey(topicKey, title)]).length;
-  (state.customTopics[topicKey] || []).forEach(item=>{
-    if(item.subtopics && item.subtopics.length){
-      total += item.subtopics.length;
-      done += item.subtopics.filter(st=>st.done).length;
-    } else {
-      total += 1;
-      if(item.done) done += 1;
-    }
-  });
+  const items = getSubjectItems(topicKey);
+  const total = items.reduce((sum,item)=>sum + item.total, 0);
+  const done = items.reduce((sum,item)=>sum + item.done, 0);
   return {done, total, pct: total ? Math.round((done/total)*100) : 0};
 }
 
@@ -3808,14 +3833,17 @@ function getSystemDesignProgress(){
   const bookItems = SD_RESOURCES.book.chapters.filter(ch=>!isHidden("sdHidden", sdResourceKey("book", ch)));
   const lldItems = SD_RESOURCES.lld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("lld", it.name)));
   const hldItems = SD_RESOURCES.hld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("hld", it.name)));
+  const customItems = (state.customSdItems || []).filter(item=>!isHidden("sdHidden", `customsd::${item.id}`));
   const bookTotal = bookItems.length;
   const bookDone = bookItems.filter(ch=>state.sdChaptersDone[sdResourceKey("book", ch)]).length;
   const lldTotal = lldItems.length;
   const lldDone = lldItems.filter(it=>state.sdItemsDone[sdResourceKey("lld", it.name)]).length;
   const hldTotal = hldItems.length;
   const hldDone = hldItems.filter(it=>state.sdItemsDone[sdResourceKey("hld", it.name)]).length;
-  const total = bookTotal + lldTotal + hldTotal;
-  const done = bookDone + lldDone + hldDone;
+  const customTotal = customItems.length;
+  const customDone = customItems.filter(item=>state.sdItemsDone[`customsd::${item.id}`]).length;
+  const total = bookTotal + lldTotal + hldTotal + customTotal;
+  const done = bookDone + lldDone + hldDone + customDone;
   return {done, total, pct: total ? Math.round((done/total)*100) : 0};
 }
 
@@ -3866,10 +3894,12 @@ function progressChildren(key){
     const bookItems = SD_RESOURCES.book.chapters.filter(ch=>!isHidden("sdHidden", sdResourceKey("book", ch)));
     const lldItems = SD_RESOURCES.lld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("lld", it.name)));
     const hldItems = SD_RESOURCES.hld.items.filter(it=>!isHidden("sdHidden", sdResourceKey("hld", it.name)));
+    const customItems = (state.customSdItems || []).filter(item=>!isHidden("sdHidden", `customsd::${item.id}`));
     return [
       {label:"Book", done:bookItems.filter(ch=>state.sdChaptersDone[sdResourceKey("book", ch)]).length, total:bookItems.length},
       {label:"LLD", done:lldItems.filter(it=>state.sdItemsDone[sdResourceKey("lld", it.name)]).length, total:lldItems.length},
-      {label:"HLD", done:hldItems.filter(it=>state.sdItemsDone[sdResourceKey("hld", it.name)]).length, total:hldItems.length}
+      {label:"HLD", done:hldItems.filter(it=>state.sdItemsDone[sdResourceKey("hld", it.name)]).length, total:hldItems.length},
+      {label:"Custom", done:customItems.filter(item=>state.sdItemsDone[`customsd::${item.id}`]).length, total:customItems.length}
     ];
   }
   if(key === "applications"){
