@@ -268,10 +268,10 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
   border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
 }
 .subtopic-card.dragging,.q-card.dragging{opacity:.45;}
-.subtopic-card[draggable="true"] > .subtopic-row,
-.q-card[draggable="true"] > .q-row{cursor:grab;}
-.subtopic-card[draggable="true"] > .subtopic-row:active,
-.q-card[draggable="true"] > .q-row:active{cursor:grabbing;}
+.subtopic-card > .subtopic-row[data-drag-handle="true"],
+.q-card > .q-row[data-drag-handle="true"]{cursor:grab;}
+.subtopic-card > .subtopic-row[data-drag-handle="true"]:active,
+.q-card > .q-row[data-drag-handle="true"]:active{cursor:grabbing;}
 .subtopic-card.done{border-color:#88d29a;background:#fbfffb;}
 .subtopic-row{box-shadow:none;border:0;border-radius:0;}
 .subtopic-row .subtopic-title{flex:1;font-size:.9rem;font-weight:700;line-height:1.45;}
@@ -281,6 +281,8 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .subtopic-progress span{display:block;height:100%;width:var(--pct);background:var(--accent);border-radius:inherit;}
 .nested-list{display:flex;flex-direction:column;gap:7px;margin-top:10px;}
 .nested-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;}
+.nested-row[data-drag-handle="true"]{cursor:grab;}
+.nested-row[data-drag-handle="true"]:active{cursor:grabbing;}
 .nested-row input{width:16px;height:16px;accent-color:var(--accent);}
 .nested-row span{font-size:.84rem;font-weight:650;}
 .add-subtopic-row{display:none;gap:8px;margin-top:10px;}
@@ -692,6 +694,9 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 
 /* ===== Resource list ===== */
 .resource-list{display:flex;flex-direction:column;gap:10px;}
+.resource-card.dragging,.nested-row.dragging{opacity:.45;}
+.resource-item[data-drag-handle="true"]{cursor:grab;}
+.resource-item[data-drag-handle="true"]:active{cursor:grabbing;}
 .resource-item{
   display:flex;align-items:center;justify-content:space-between;
   background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;
@@ -897,7 +902,10 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
   background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;
   box-shadow:var(--shadow);
 }
+.qa-item.dragging{opacity:.45;}
 .qa-item .q{font-weight:700;font-family:var(--serif);font-size:1rem;margin-bottom:8px;color:var(--accent2);}
+.qa-item .q[data-drag-handle="true"]{cursor:grab;}
+.qa-item .q[data-drag-handle="true"]:active{cursor:grabbing;}
 .qa-item .a{font-family:var(--mono);font-size:.82rem;white-space:pre-wrap;line-height:1.6;color:var(--text);}
 .qa-item .meta{display:flex;justify-content:flex-end;margin-top:10px;}
 
@@ -1458,7 +1466,10 @@ function createDefaultState(){
       companyLabels: {},
       companyHidden: {},
       topicOrder: {},
-      dsaQuestionOrder: {}
+      topicChildOrder: {},
+      dsaQuestionOrder: {},
+      sdResourceOrder: {},
+      personalOrder: {}
     }
   };
   Object.keys(TOPICS).forEach(key=>{
@@ -1619,41 +1630,67 @@ function applySavedOrder(items, order, getKey){
     return ar === br ? 0 : ar - br;
   });
 }
-function bindDragReorder(containerSelector, itemSelector, onOrder){
+function bindDragReorder(containerSelector, itemSelector, onOrder, handleSelector=""){
   const containers = document.querySelectorAll(containerSelector);
   containers.forEach(container=>{
-    let dragged = null;
     container.querySelectorAll(itemSelector).forEach(item=>{
-      item.draggable = true;
-      item.addEventListener("dragstart", event=>{
-        const handle = item.querySelector(item.matches(".q-card") ? ":scope > .q-row" : ":scope > .subtopic-row");
-        const interactive = event.target.closest("textarea,input,button,a,select,[contenteditable='true']");
-        if(!handle || !handle.contains(event.target) || interactive) {
-          event.preventDefault();
-          return;
+      const defaultHandle = item.matches(".q-card") ? ":scope > .q-row" : ":scope > .subtopic-row";
+      const selector = handleSelector || defaultHandle;
+      const handle = item.matches(selector) ? item : item.querySelector(selector);
+      if(!handle) return;
+      let startY = 0, didDrag = false, suppressClick = false;
+      handle.dataset.dragHandle = "true";
+
+      const moveItem = clientY=>{
+        if(!didDrag && Math.abs(clientY - startY) < 6) return;
+        if(!didDrag){
+          didDrag = true;
+          item.classList.add("dragging");
         }
-        dragged = item;
-        item.classList.add("dragging");
-        event.dataTransfer.effectAllowed = "move";
-      });
-      item.addEventListener("dragend", ()=>{
+        const after = [...container.querySelectorAll(`${itemSelector}:not(.dragging)`)].find(el=>{
+          const box = el.getBoundingClientRect();
+          return clientY < box.top + box.height / 2;
+        });
+        if(after) container.insertBefore(item, after);
+        else container.appendChild(item);
+      };
+      const onMouseMove = event=>{
+        event.preventDefault();
+        moveItem(event.clientY);
+      };
+      const finishDrag = ()=>{
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", finishDrag);
+        if(!didDrag) return;
         item.classList.remove("dragging");
-        dragged = null;
+        suppressClick = true;
         const order = [...container.querySelectorAll(itemSelector)].map(el=>el.dataset.orderKey).filter(Boolean);
         onOrder(order, container);
+        setTimeout(()=>suppressClick = false, 0);
+      };
+      handle.addEventListener("mousedown", event=>{
+        if(event.target.closest("textarea,input,button,a,select,[contenteditable='true']")) return;
+        if(event.button !== 0) return;
+        startY = event.clientY;
+        didDrag = false;
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", finishDrag, {once:true});
       });
-    });
-    container.addEventListener("dragover", event=>{
-      if(!dragged) return;
-      event.preventDefault();
-      const after = [...container.querySelectorAll(`${itemSelector}:not(.dragging)`)].find(el=>{
-        const box = el.getBoundingClientRect();
-        return event.clientY < box.top + box.height / 2;
-      });
-      if(after) container.insertBefore(dragged, after);
-      else container.appendChild(dragged);
+      handle.addEventListener("click", event=>{
+        if(!suppressClick) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }, true);
     });
   });
+}
+function mergeSavedOrder(existing, reorderedKeys){
+  const moved = new Set(reorderedKeys);
+  const base = Array.isArray(existing) ? existing.filter(key=>!moved.has(key)) : [];
+  const firstMovedIndex = Array.isArray(existing) ? existing.findIndex(key=>moved.has(key)) : -1;
+  const insertAt = firstMovedIndex < 0 ? base.length : Math.min(firstMovedIndex, base.length);
+  base.splice(insertAt, 0, ...reorderedKeys);
+  return base;
 }
 function getDsaCategoryKeys(){
   const builtIns = DSA_TAB_TOPICS.filter(cat=>!isHidden("dsaCategoryHidden", cat));
@@ -1933,7 +1970,9 @@ function categorizedTopicHTML(topicKey, cards){
   const groups = TOPIC_CATEGORY_GROUPS[topicKey];
   if(!groups) return cards.map(c=>c.html).join("");
   const grouped = groups.map(group=>{
-    const html = group.indices.map(idx=>cards.find(c=>c.idx===idx)?.html || "").join("");
+    const groupCards = cards.filter(card=>group.indices.includes(card.idx));
+    const ordered = applySavedOrder(groupCards, state.edits.topicOrder?.[topicKey], card=>card.key);
+    const html = ordered.map(card=>card.html).join("");
     return `
       <section class="category-section" id="${group.id}">
         <h3 class="category-title">${group.label}<span>${group.indices.length} topics</span></h3>
@@ -1941,7 +1980,8 @@ function categorizedTopicHTML(topicKey, cards){
       </section>`;
   }).join("");
   const groupedIndices = new Set(groups.flatMap(g=>g.indices));
-  const uncategorized = cards.filter(c=>!groupedIndices.has(c.idx)).map(c=>c.html).join("");
+  const uncategorizedCards = cards.filter(c=>!groupedIndices.has(c.idx));
+  const uncategorized = applySavedOrder(uncategorizedCards, state.edits.topicOrder?.[topicKey], card=>card.key).map(c=>c.html).join("");
   return grouped + uncategorized;
 }
 
@@ -2043,7 +2083,7 @@ function renderTopicView(topicKey){
     const isOpen = !!openTopicNotePanels[noteKey];
     const linkOpen = !!(openTopicLinkInputs[noteKey] || note.link);
     const idSafe = noteKey.replaceAll("::","-");
-    const children = state.topicChildren[noteKey] || [];
+    const children = applySavedOrder(state.topicChildren[noteKey] || [], state.edits.topicChildOrder?.[noteKey], child=>child.id);
     const childTotal = children.length;
     const childDone = children.filter(st=>st.done).length;
     const itemPct = childTotal ? Math.round((childDone / childTotal) * 100) : (doneMap[noteKey] ? 100 : 0);
@@ -2058,9 +2098,9 @@ function renderTopicView(topicKey){
     </div>
     ${childTotal ? `<div class="subtopic-body">
       <div class="subtopic-progress"><span style="--pct:${itemPct}%"></span></div>
-      <div class="nested-list">
+      <div class="nested-list" data-parent-key="${escapeAttr(noteKey)}" data-topic="${escapeAttr(topicKey)}">
         ${children.map(child=>`
-          <label class="nested-row">
+          <label class="nested-row" data-order-key="${escapeAttr(child.id)}">
             <input type="checkbox" class="topic-child-check" data-parent-key="${noteKey}" data-sub-id="${escapeAttr(child.id)}" ${child.done?"checked":""}>
             <span>${escapeHTML(child.title)}</span>
             ${editActionsHTML("topic-child", child.id, `data-parent-key="${escapeAttr(noteKey)}"`)}
@@ -2083,14 +2123,12 @@ function renderTopicView(topicKey){
   `};
   }).filter(Boolean);
 
-  const orderedBuiltInCards = applySavedOrder(builtInCards, state.edits.topicOrder?.[topicKey], item=>item.key);
-  let topicsHTML = categorizedTopicHTML(topicKey, orderedBuiltInCards);
-
   const customTopicCards = state.customTopics[topicKey].map((item,idx)=>{
     const noteKey = `${topicKey}::custom::${item.id}`;
-    const hasChildren = item.subtopics && item.subtopics.length;
+    const orderedChildren = applySavedOrder(item.subtopics || [], state.edits.topicChildOrder?.[noteKey], child=>child.id);
+    const hasChildren = orderedChildren.length;
     const itemTotal = hasChildren ? item.subtopics.length : 1;
-    const itemDone = hasChildren ? item.subtopics.filter(st=>st.done).length : (item.done ? 1 : 0);
+    const itemDone = hasChildren ? orderedChildren.filter(st=>st.done).length : (item.done ? 1 : 0);
     const itemPct = itemTotal ? Math.round((itemDone/itemTotal)*100) : 0;
     const checked = hasChildren ? itemDone === itemTotal && itemTotal > 0 : !!item.done;
     const itemLinks = item.links || (item.link ? [{tag:"resource", url:item.link}] : []);
@@ -2108,9 +2146,9 @@ function renderTopicView(topicKey){
       </div>
       ${hasChildren ? `<div class="subtopic-body">
         <div class="subtopic-progress"><span style="--pct:${itemPct}%"></span></div>
-        <div class="nested-list">
-          ${(item.subtopics||[]).map((st,subIdx)=>`
-            <label class="nested-row">
+        <div class="nested-list" data-custom-topic-id="${escapeAttr(item.id)}" data-topic="${escapeAttr(topicKey)}" data-parent-key="${escapeAttr(noteKey)}">
+          ${orderedChildren.map((st,subIdx)=>`
+            <label class="nested-row" data-order-key="${escapeAttr(st.id)}">
               <input type="checkbox" class="custom-subtopic-check" data-topic="${topicKey}" data-topic-id="${escapeAttr(item.id)}" data-sub-id="${escapeAttr(st.id)}" ${st.done?"checked":""}>
               <span>${escapeHTML(st.title)}</span>
               ${editActionsHTML("custom-subtopic", st.id, `data-topic="${topicKey}" data-topic-id="${escapeAttr(item.id)}"`)}
@@ -2131,7 +2169,9 @@ function renderTopicView(topicKey){
       </div>
     </div>`};
   });
-  topicsHTML += applySavedOrder(customTopicCards, state.edits.topicOrder?.[topicKey], item=>item.key).map(item=>item.html).join("");
+  const allTopicCards = [...builtInCards, ...customTopicCards];
+  const orderedTopicCards = applySavedOrder(allTopicCards, state.edits.topicOrder?.[topicKey], item=>item.key);
+  const topicsHTML = categorizedTopicHTML(topicKey, orderedTopicCards);
 
   main.innerHTML = `
   <div class="view active">
@@ -2378,10 +2418,27 @@ function bindCustomTopicControls(topicKey){
       renderPreservingScroll(()=>renderTopicView(topicKey));
     };
   });
-  bindDragReorder(".subtopic-list", ".subtopic-card", order=>{
-    state.edits.topicOrder[topicKey] = order;
+  if(TOPIC_CATEGORY_GROUPS[topicKey]){
+    bindDragReorder(".subtopic-list > .category-section", ".subtopic-card", order=>{
+      state.edits.topicOrder[topicKey] = mergeSavedOrder(state.edits.topicOrder[topicKey], order);
+      save();
+    });
+    bindDragReorder(".subtopic-list", ":scope > .subtopic-card", order=>{
+      state.edits.topicOrder[topicKey] = mergeSavedOrder(state.edits.topicOrder[topicKey], order);
+      save();
+    });
+  } else {
+    bindDragReorder(".subtopic-list", ":scope > .subtopic-card", order=>{
+      state.edits.topicOrder[topicKey] = order;
+      save();
+    });
+  }
+  bindDragReorder(".nested-list", ":scope > .nested-row", (order, list)=>{
+    const parentKey = list.dataset.parentKey;
+    if(!parentKey) return;
+    state.edits.topicChildOrder[parentKey] = order;
     save();
-  });
+  }, ".nested-row");
 }
 
 function bindTopicEditControls(topicKey){
@@ -3461,6 +3518,7 @@ function renderSystemDesignView(){
     const linkOpen = !!openSdLinkInputs[key];
     const idSafe = key.replaceAll("::","-");
     return `
+      <div class="resource-card" data-order-key="${escapeAttr(key)}">
       <div class="resource-item ${checked ? "done":""}" data-key="${key}" id="sd-card-${key.replaceAll('::','-')}">
         <span class="resource-main">
           <input type="checkbox" class="sd-check" data-key="${key}" ${checked ? "checked":""}>
@@ -3482,11 +3540,13 @@ function renderSystemDesignView(){
           <button class="btn small secondary expand-sd-note" data-key="${key}">Expand</button>
           <button class="btn small secondary close-sd-note" data-key="${key}">Close</button>
         </div>
+      </div>
       </div>`;
   }
 
   function resourceListHTML(prefix, items, doneMap, getName){
-    return items.map((it,idx)=>{
+    const orderedItems = applySavedOrder(items, state.edits.sdResourceOrder?.[prefix], it=>sdResourceKey(prefix, getName(it)));
+    return orderedItems.map((it,idx)=>{
       const name = getName(it);
       const key = sdResourceKey(prefix, name);
       const link = it.link;
@@ -3515,8 +3575,8 @@ function renderSystemDesignView(){
         ])}
         <section class="category-section" id="sd-book">
           <h3 class="category-title">${SD_RESOURCES.book.label}<span>${bookTotal} chapters</span></h3>
-          <div class="resource-list" style="margin-bottom:24px;">
-            ${SD_RESOURCES.book.chapters.map((ch,idx)=>{
+          <div class="resource-list" data-order-group="book" style="margin-bottom:24px;">
+            ${applySavedOrder(SD_RESOURCES.book.chapters, state.edits.sdResourceOrder?.book, ch=>sdResourceKey("book", ch)).map((ch,idx)=>{
               const key = sdResourceKey("book", ch);
               return resourceRowHTML("book", idx, ch, "", !!state.sdChaptersDone[key]);
             }).join("")}
@@ -3525,21 +3585,21 @@ function renderSystemDesignView(){
 
         <section class="category-section" id="sd-lld">
           <h3 class="category-title">${SD_RESOURCES.lld.label}<span>${lldTotal} videos</span></h3>
-          <div class="resource-list" style="margin-bottom:24px;">
+          <div class="resource-list" data-order-group="lld" style="margin-bottom:24px;">
             ${resourceListHTML("lld", SD_RESOURCES.lld.items, state.sdItemsDone, it=>it.name)}
           </div>
         </section>
 
         <section class="category-section" id="sd-hld">
           <h3 class="category-title">${SD_RESOURCES.hld.label}<span>${hldTotal} items</span></h3>
-          <div class="resource-list">
+          <div class="resource-list" data-order-group="hld">
             ${resourceListHTML("hld", SD_RESOURCES.hld.items, state.sdItemsDone, it=>it.name)}
           </div>
         </section>
         <section class="category-section" id="sd-custom">
           <h3 class="category-title">Custom System Design<span>${customTotal} items</span></h3>
-          <div class="resource-list">
-            ${visibleCustomSd.map((item, idx)=>resourceRowHTML(item.section || "custom", idx, item.name, item.link || "", !!state.sdItemsDone[`customsd::${item.id}`], `customsd::${item.id}`, true)).join("") || `<div class="empty" style="padding:18px;">Create your first custom System Design item.</div>`}
+          <div class="resource-list" data-order-group="custom">
+            ${applySavedOrder(visibleCustomSd, state.edits.sdResourceOrder?.custom, item=>`customsd::${item.id}`).map((item, idx)=>resourceRowHTML(item.section || "custom", idx, item.name, item.link || "", !!state.sdItemsDone[`customsd::${item.id}`], `customsd::${item.id}`, true)).join("") || `<div class="empty" style="padding:18px;">Create your first custom System Design item.</div>`}
           </div>
         </section>
       </div>
@@ -3565,6 +3625,12 @@ function renderSystemDesignView(){
   });
 
   bindSystemDesignInlineNotes();
+  bindDragReorder(".resource-list", ":scope > .resource-card", (order, list)=>{
+    const group = list.dataset.orderGroup;
+    if(!group) return;
+    state.edits.sdResourceOrder[group] = order;
+    save();
+  }, ":scope > .resource-item");
   bindSystemDesignEditControls();
   bindCreateSystemDesignItem();
   bindEditModeToggle(renderSystemDesignView);
@@ -3880,7 +3946,8 @@ function bindApplicationsEditControls(){
 function renderPersonalView(){
   const main = document.getElementById("mainArea");
 
-  const items = state.personalQA.slice().reverse().map((qa, revIdx)=>{
+  const orderedPersonalQA = applySavedOrder(state.personalQA.slice().reverse(), state.edits.personalOrder?.all, qa=>qa.id);
+  const items = orderedPersonalQA.map((qa, revIdx)=>{
     const date = new Date(qa.ts).toLocaleDateString();
     return `
     <div class="qa-item" id="qa-${qa.id}">
@@ -3948,6 +4015,10 @@ function renderPersonalView(){
   });
   bindEditModeToggle(renderPersonalView);
   bindPageSearch("personal", state.personalQA.map(qa=>({label:qa.q, id:`qa-${qa.id}`, open:()=>{}})));
+  bindDragReorder(".qa-list", ":scope > .qa-item", order=>{
+    state.edits.personalOrder.all = order;
+    save();
+  }, ":scope > .q");
 }
 
 /* ========================= MASTER ROUTER ========================= */
