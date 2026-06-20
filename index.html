@@ -328,6 +328,28 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .link-chip button{border:0;background:transparent;color:var(--danger);cursor:pointer;font-weight:900;}
 .note-dot{font-size:.68rem;font-weight:900;color:var(--accent);background:var(--accent-soft);border:1px solid #b9e6c2;border-radius:999px;padding:4px 8px;white-space:nowrap;}
 .row-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.note-editor{margin-bottom:8px;}
+.note-editor-toolbar{
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f3f7f4;
+  border:1px solid var(--border);border-bottom:0;border-radius:8px 8px 0 0;
+}
+.note-format-btn{
+  width:32px;height:30px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);
+  font-size:.82rem;font-weight:900;cursor:pointer;
+}
+.note-format-btn:hover{background:var(--accent-soft);border-color:#9bd7a9;color:var(--accent);}
+.note-editor textarea{border-radius:0 0 8px 8px!important;margin-bottom:0!important;}
+.note-preview{
+  margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+  background:#fff;color:var(--text);font-size:.82rem;line-height:1.55;
+}
+.note-preview:empty{display:none;}
+.note-preview p{margin:0 0 6px;}
+.note-preview p:last-child{margin-bottom:0;}
+.note-preview ul{margin:0;padding-left:20px;}
+.note-preview li{margin:2px 0;}
+.note-preview strong{font-weight:900;color:#102019;}
 .topic-workspace{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start;}
 @media (max-width:1050px){.topic-workspace{grid-template-columns:1fr;}}
 .topic-main{position:relative;}
@@ -1812,6 +1834,14 @@ function normalizeNoteObject(note){
   return {...note, body:note.body || "", links:links.filter(l=>l && l.url)};
 }
 
+function appendLinkDraft(links, idSafe){
+  const url = document.getElementById(`linkurl-${idSafe}`)?.value.trim() || "";
+  if(!url) return false;
+  const tag = document.getElementById(`linktag-${idSafe}`)?.value.trim() || "resource";
+  if(!links.some(link=>link.url === url && link.tag === tag)) links.push({tag, url});
+  return true;
+}
+
 function normalizeStoredNotes(s){
   Object.keys(s.topicNotes || {}).forEach(k=>s.topicNotes[k] = normalizeNoteObject(s.topicNotes[k]));
   Object.keys(s.dsaNotes || {}).forEach(k=>s.dsaNotes[k] = normalizeNoteObject(s.dsaNotes[k]));
@@ -2031,7 +2061,7 @@ function renderTopicView(topicKey){
       </div>
     </div>` : ""}
     <div class="topic-note-panel ${isOpen?'open':''}">
-      <textarea id="topicnotebody-${idSafe}" placeholder="Write the explanation, gotchas, examples, or interview notes for this topic...">${escapeHTML(note.body||"")}</textarea>
+      ${noteEditorHTML(`topicnotebody-${idSafe}`, note.body, "Write the explanation, gotchas, examples, or interview notes for this topic...")}
       <div class="link-chips">${noteLinksHTML(noteLinks, noteKey, "delete-topic-link")}</div>
       ${linkFormHTML(noteKey, idSafe, linkOpen, "save-topic-link")}
       <div class="row-actions">
@@ -2081,7 +2111,7 @@ function renderTopicView(topicKey){
         </div>
       </div>` : ""}
       <div class="topic-note-panel ${isOpen?'open':''}">
-        <textarea id="topicnotebody-${idSafe}" placeholder="Write notes for this topic...">${escapeHTML(item.note||"")}</textarea>
+        ${noteEditorHTML(`topicnotebody-${idSafe}`, item.note, "Write notes for this topic...")}
         <div class="link-chips">${noteLinksHTML(itemLinks, noteKey, "delete-topic-link")}</div>
         ${linkFormHTML(noteKey, idSafe, linkOpen, "save-topic-link")}
         <div class="row-actions">
@@ -2195,15 +2225,24 @@ function bindTopicInlineNotes(){
       const key = btn.dataset.key;
       const idSafe = key.replaceAll("::","-");
       const body = document.getElementById(`topicnotebody-${idSafe}`).value.trim();
+      let savedLink = false;
       if(key.includes("::custom::")){
         const [topicKey,,id] = key.split("::");
         const item = findCustomTopic(topicKey, id);
-        if(item) item.note = body;
+        if(item){
+          item.note = body;
+          if(!Array.isArray(item.links)) item.links = [];
+          savedLink = appendLinkDraft(item.links, idSafe);
+        }
       } else {
-        state.topicNotes[key] = {...normalizeNoteObject(state.topicNotes[key]), body};
+        const note = normalizeNoteObject(state.topicNotes[key]);
+        note.body = body;
+        savedLink = appendLinkDraft(note.links, idSafe);
+        state.topicNotes[key] = note;
       }
       save();
       openTopicNotePanels[key] = true;
+      if(savedLink) openTopicLinkInputs[key] = false;
       clearSaveButtonDirty(btn);
       renderPreservingScroll(()=>renderTopicView(key.split("::")[0]));
     };
@@ -2215,15 +2254,18 @@ function bindTopicInlineNotes(){
       const tag = document.getElementById(`linktag-${idSafe}`).value.trim() || "resource";
       const url = document.getElementById(`linkurl-${idSafe}`).value.trim();
       if(!url) return;
+      const body = document.getElementById(`topicnotebody-${idSafe}`).value.trim();
       if(key.includes("::custom::")){
         const [topicKey,,id] = key.split("::");
         const item = findCustomTopic(topicKey, id);
         if(!item) return;
         if(!Array.isArray(item.links)) item.links = [];
-        item.links.push({tag, url});
+        item.note = body;
+        if(!item.links.some(link=>link.url === url && link.tag === tag)) item.links.push({tag, url});
       } else {
         const note = normalizeNoteObject(state.topicNotes[key]);
-        note.links.push({tag, url});
+        note.body = body;
+        if(!note.links.some(link=>link.url === url && link.tag === tag)) note.links.push({tag, url});
         state.topicNotes[key] = note;
       }
       save();
@@ -2427,12 +2469,15 @@ function autoResizeTextareas(){
   document.querySelectorAll("textarea").forEach(area=>{
     area.style.height = "auto";
     area.style.height = `${area.scrollHeight + 2}px`;
+    updateNotePreview(area);
     area.oninput = ()=> {
       area.style.height = "auto";
       area.style.height = `${area.scrollHeight + 2}px`;
+      updateNotePreview(area);
       markNearestSaveButtonDirty(area);
     };
   });
+  bindNoteFormatting();
 }
 
 function markNearestSaveButtonDirty(input){
@@ -2585,6 +2630,75 @@ function linkFormHTML(key, idSafe, open, cls){
       <input type="text" id="linkurl-${idSafe}" placeholder="Paste link">
       <button class="btn small ${cls}" data-key="${key}">Save Link</button>
     </div>`;
+}
+
+function renderNoteMarkdown(body){
+  const lines = String(body || "").split(/\r?\n/);
+  let html = "", listOpen = false;
+  const inline = line=>escapeHTML(line).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  lines.forEach(line=>{
+    const bullet = line.match(/^\s*-\s+(.*)$/);
+    if(bullet){
+      if(!listOpen){ html += "<ul>"; listOpen = true; }
+      html += `<li>${inline(bullet[1])}</li>`;
+      return;
+    }
+    if(listOpen){ html += "</ul>"; listOpen = false; }
+    if(line.trim()) html += `<p>${inline(line)}</p>`;
+  });
+  if(listOpen) html += "</ul>";
+  return html;
+}
+
+function noteEditorHTML(id, body, placeholder){
+  return `
+    <div class="note-editor">
+      <div class="note-editor-toolbar">
+        <button type="button" class="note-format-btn" data-action="bold" data-target="${id}" title="Bold selected text" aria-label="Bold selected text">B</button>
+        <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
+      </div>
+      <textarea id="${id}" placeholder="${escapeAttr(placeholder)}">${escapeHTML(body || "")}</textarea>
+      <div class="note-preview" data-preview-for="${id}">${renderNoteMarkdown(body)}</div>
+    </div>`;
+}
+
+function updateNotePreview(area){
+  const preview = document.querySelector(`[data-preview-for="${area.id}"]`);
+  if(preview) preview.innerHTML = renderNoteMarkdown(area.value);
+}
+
+function bindNoteFormatting(){
+  document.querySelectorAll(".note-format-btn").forEach(btn=>{
+    btn.onclick = ()=>{
+      const area = document.getElementById(btn.dataset.target);
+      if(!area) return;
+      const value = area.value;
+      const start = area.selectionStart;
+      const end = area.selectionEnd;
+      if(btn.dataset.action === "bold"){
+        const selected = value.slice(start, end);
+        const replacement = `**${selected}**`;
+        area.setRangeText(replacement, start, end, "end");
+        const caretStart = selected ? start : start + 2;
+        const caretEnd = selected ? start + replacement.length : caretStart;
+        area.setSelectionRange(caretStart, caretEnd);
+      } else {
+        const lineStart = value.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+        const nextBreak = value.indexOf("\n", end);
+        const lineEnd = nextBreak === -1 ? value.length : nextBreak;
+        const block = value.slice(lineStart, lineEnd);
+        const rows = block.split("\n");
+        const removeBullets = rows.every(row=>!row.trim() || /^\s*-\s+/.test(row));
+        const replacement = rows.map(row=>{
+          if(!row.trim()) return row;
+          return removeBullets ? row.replace(/^(\s*)-\s+/, "$1") : `- ${row}`;
+        }).join("\n");
+        area.setRangeText(replacement, lineStart, lineEnd, "select");
+      }
+      area.focus();
+      area.dispatchEvent(new Event("input", {bubbles:true}));
+    };
+  });
 }
 
 function pageSearchHTML(pageKey, placeholder){
@@ -2995,7 +3109,7 @@ function renderDsaQuestions(){
         ${editActionsHTML(item.custom ? "dsa-custom-question" : "dsa-built-in-question", key, `data-cat="${catKey}"`)}
       </div>
       <div class="q-note-panel ${isOpen?'open':''}" id="notepanel-${key.replaceAll('::','-')}">
-        <textarea id="notebody-${key.replaceAll('::','-')}" placeholder="Write the logic / approach / edge cases for this question...">${escapeHTML(note.body||"")}</textarea>
+        ${noteEditorHTML(`notebody-${key.replaceAll('::','-')}`, note.body, "Write the logic / approach / edge cases for this question...")}
         <div class="link-chips">${noteLinksHTML(noteLinks, key, "delete-q-link")}</div>
         ${linkFormHTML(key, key.replaceAll('::','-'), linkOpen, "save-q-link")}
         <div class="row-actions">
@@ -3080,8 +3194,13 @@ function renderDsaQuestions(){
       const key = btn.dataset.key;
       const idSafe = key.replaceAll('::','-');
       const body = document.getElementById(`notebody-${idSafe}`).value.trim();
-      state.dsaNotes[key] = {...normalizeNoteObject(state.dsaNotes[key]), body};
+      const note = normalizeNoteObject(state.dsaNotes[key]);
+      note.body = body;
+      const savedLink = appendLinkDraft(note.links, idSafe);
+      state.dsaNotes[key] = note;
       save();
+      openNotePanels[key] = true;
+      if(savedLink) openDsaLinkInputs[key] = false;
       clearSaveButtonDirty(btn);
       renderPreservingScroll(renderDsaQuestions);
     };
@@ -3094,7 +3213,8 @@ function renderDsaQuestions(){
       const url = document.getElementById(`linkurl-${idSafe}`).value.trim();
       if(!url) return;
       const note = normalizeNoteObject(state.dsaNotes[key]);
-      note.links.push({tag, url});
+      note.body = document.getElementById(`notebody-${idSafe}`).value.trim();
+      if(!note.links.some(link=>link.url === url && link.tag === tag)) note.links.push({tag, url});
       state.dsaNotes[key] = note;
       save();
       openNotePanels[key] = true;
@@ -3338,7 +3458,7 @@ function renderSystemDesignView(){
         </span>
       </div>
       <div class="resource-note-panel ${isOpen?'open':''}">
-        <textarea id="sdnotebody-${idSafe}" placeholder="Write notes, design tradeoffs, examples, or edge cases for this item...">${escapeHTML(note.body||"")}</textarea>
+        ${noteEditorHTML(`sdnotebody-${idSafe}`, note.body, "Write notes, design tradeoffs, examples, or edge cases for this item...")}
         <div class="link-chips">${noteLinksHTML(noteLinks, key, "delete-sd-link")}</div>
         ${linkFormHTML(key, idSafe, linkOpen, "save-sd-link")}
         <div class="row-actions">
@@ -3523,9 +3643,13 @@ function bindSystemDesignInlineNotes(){
       const key = btn.dataset.key;
       const idSafe = key.replaceAll("::","-");
       const body = document.getElementById(`sdnotebody-${idSafe}`).value.trim();
-      state.sdNotes[key] = {...normalizeNoteObject(state.sdNotes[key]), body};
+      const note = normalizeNoteObject(state.sdNotes[key]);
+      note.body = body;
+      const savedLink = appendLinkDraft(note.links, idSafe);
+      state.sdNotes[key] = note;
       save();
       openSdNotePanels[key] = true;
+      if(savedLink) openSdLinkInputs[key] = false;
       clearSaveButtonDirty(btn);
       renderPreservingScroll(renderSystemDesignView);
     };
@@ -3538,7 +3662,8 @@ function bindSystemDesignInlineNotes(){
       const url = document.getElementById(`linkurl-${idSafe}`).value.trim();
       if(!url) return;
       const note = normalizeNoteObject(state.sdNotes[key]);
-      note.links.push({tag, url});
+      note.body = document.getElementById(`sdnotebody-${idSafe}`).value.trim();
+      if(!note.links.some(link=>link.url === url && link.tag === tag)) note.links.push({tag, url});
       state.sdNotes[key] = note;
       save();
       openSdNotePanels[key] = true;
