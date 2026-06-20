@@ -268,7 +268,10 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
   border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
 }
 .subtopic-card.dragging,.q-card.dragging{opacity:.45;}
-.subtopic-card[draggable="true"],.q-card[draggable="true"]{cursor:grab;}
+.subtopic-card[draggable="true"] > .subtopic-row,
+.q-card[draggable="true"] > .q-row{cursor:grab;}
+.subtopic-card[draggable="true"] > .subtopic-row:active,
+.q-card[draggable="true"] > .q-row:active{cursor:grabbing;}
 .subtopic-card.done{border-color:#88d29a;background:#fbfffb;}
 .subtopic-row{box-shadow:none;border:0;border-radius:0;}
 .subtopic-row .subtopic-title{flex:1;font-size:.9rem;font-weight:700;line-height:1.45;}
@@ -339,7 +342,20 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
   font-size:.82rem;font-weight:900;cursor:pointer;
 }
 .note-format-btn:hover{background:var(--accent-soft);border-color:#9bd7a9;color:var(--accent);}
-.note-editor textarea{border-radius:0 0 8px 8px!important;margin-bottom:0!important;}
+.note-edit-surface{
+  width:100%;min-height:100px;background:#fff;border:1px solid var(--border);
+  color:var(--text);border-radius:0 0 8px 8px;padding:10px 12px;font-size:.82rem;
+  font-family:var(--mono);line-height:1.5;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;
+  cursor:text;
+}
+.note-editor{cursor:default;}
+.note-editor-toolbar,.note-format-btn{cursor:pointer;}
+.note-edit-surface:focus{border-color:#82c592;box-shadow:0 0 0 2px rgba(61,139,82,.1);}
+.note-edit-surface:empty::before{content:attr(data-placeholder);color:#8a968d;pointer-events:none;}
+.note-edit-surface ul{margin:4px 0;padding-left:22px;}
+.note-edit-surface li{margin:2px 0;}
+.note-edit-surface strong,.note-edit-surface b{font-weight:900;}
+.note-expanded .note-edit-surface{min-height:52vh;}
 .topic-workspace{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start;}
 @media (max-width:1050px){.topic-workspace{grid-template-columns:1fr;}}
 .topic-main{position:relative;}
@@ -1610,7 +1626,9 @@ function bindDragReorder(containerSelector, itemSelector, onOrder){
     container.querySelectorAll(itemSelector).forEach(item=>{
       item.draggable = true;
       item.addEventListener("dragstart", event=>{
-        if(event.target.closest("textarea,input,button,a,select")) {
+        const handle = item.querySelector(item.matches(".q-card") ? ":scope > .q-row" : ":scope > .subtopic-row");
+        const interactive = event.target.closest("textarea,input,button,a,select,[contenteditable='true']");
+        if(!handle || !handle.contains(event.target) || interactive) {
           event.preventDefault();
           return;
         }
@@ -2214,7 +2232,7 @@ function bindTopicInlineNotes(){
     btn.onclick = ()=>{
       const key = btn.dataset.key;
       const idSafe = key.replaceAll("::","-");
-      const body = document.getElementById(`topicnotebody-${idSafe}`).value.trim();
+      const body = getNoteEditorBody(`topicnotebody-${idSafe}`);
       let savedLink = false;
       if(key.includes("::custom::")){
         const [topicKey,,id] = key.split("::");
@@ -2244,7 +2262,7 @@ function bindTopicInlineNotes(){
       const tag = document.getElementById(`linktag-${idSafe}`).value.trim() || "resource";
       const url = document.getElementById(`linkurl-${idSafe}`).value.trim();
       if(!url) return;
-      const body = document.getElementById(`topicnotebody-${idSafe}`).value.trim();
+      const body = getNoteEditorBody(`topicnotebody-${idSafe}`);
       if(key.includes("::custom::")){
         const [topicKey,,id] = key.split("::");
         const item = findCustomTopic(topicKey, id);
@@ -2465,6 +2483,10 @@ function autoResizeTextareas(){
       markNearestSaveButtonDirty(area);
     };
   });
+  document.querySelectorAll(".note-edit-surface").forEach(editor=>{
+    editor.oninput = ()=>markNearestSaveButtonDirty(editor);
+    editor.onblur = ()=>{ if(!editor.textContent.trim()) editor.innerHTML = ""; };
+  });
   bindNoteFormatting();
 }
 
@@ -2620,6 +2642,55 @@ function linkFormHTML(key, idSafe, open, cls){
     </div>`;
 }
 
+const NOTE_RICH_PREFIX = "__TRACK_LEARN_RICH__:";
+
+function sanitizeNoteHTML(html){
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
+  const allowed = new Set(["B","STRONG","UL","OL","LI","DIV","P","BR"]);
+  [...template.content.querySelectorAll("*")].forEach(element=>{
+    if(!allowed.has(element.tagName)){
+      element.replaceWith(...element.childNodes);
+      return;
+    }
+    [...element.attributes].forEach(attr=>element.removeAttribute(attr.name));
+  });
+  return template.innerHTML;
+}
+
+function legacyNoteBodyToHTML(body){
+  const lines = String(body || "").split(/\r?\n/);
+  let html = "", listOpen = false;
+  const inline = line=>escapeHTML(line).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  lines.forEach(line=>{
+    const bullet = line.match(/^\s*-\s+(.*)$/);
+    if(bullet){
+      if(!listOpen){ html += "<ul>"; listOpen = true; }
+      html += `<li>${inline(bullet[1])}</li>`;
+      return;
+    }
+    if(listOpen){ html += "</ul>"; listOpen = false; }
+    if(line) html += `<div>${inline(line)}</div>`;
+    else html += "<div><br></div>";
+  });
+  if(listOpen) html += "</ul>";
+  return html;
+}
+
+function noteBodyToHTML(body){
+  const value = String(body || "");
+  return value.startsWith(NOTE_RICH_PREFIX)
+    ? sanitizeNoteHTML(value.slice(NOTE_RICH_PREFIX.length))
+    : legacyNoteBodyToHTML(value);
+}
+
+function getNoteEditorBody(id){
+  const editor = document.getElementById(id);
+  if(!editor) return "";
+  const html = sanitizeNoteHTML(editor.innerHTML);
+  return editor.textContent.trim() ? `${NOTE_RICH_PREFIX}${html}` : "";
+}
+
 function noteEditorHTML(id, body, placeholder){
   return `
     <div class="note-editor">
@@ -2627,40 +2698,20 @@ function noteEditorHTML(id, body, placeholder){
         <button type="button" class="note-format-btn" data-action="bold" data-target="${id}" title="Bold selected text" aria-label="Bold selected text">B</button>
         <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
       </div>
-      <textarea id="${id}" placeholder="${escapeAttr(placeholder)}">${escapeHTML(body || "")}</textarea>
+      <div id="${id}" class="note-edit-surface" contenteditable="true" draggable="false" role="textbox" aria-multiline="true" data-placeholder="${escapeAttr(placeholder)}">${noteBodyToHTML(body)}</div>
     </div>`;
 }
 
 function bindNoteFormatting(){
   document.querySelectorAll(".note-format-btn").forEach(btn=>{
+    btn.onmousedown = event=>event.preventDefault();
     btn.onclick = ()=>{
-      const area = document.getElementById(btn.dataset.target);
-      if(!area) return;
-      const value = area.value;
-      const start = area.selectionStart;
-      const end = area.selectionEnd;
-      if(btn.dataset.action === "bold"){
-        const selected = value.slice(start, end);
-        const replacement = `**${selected}**`;
-        area.setRangeText(replacement, start, end, "end");
-        const caretStart = selected ? start : start + 2;
-        const caretEnd = selected ? start + replacement.length : caretStart;
-        area.setSelectionRange(caretStart, caretEnd);
-      } else {
-        const lineStart = value.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
-        const nextBreak = value.indexOf("\n", end);
-        const lineEnd = nextBreak === -1 ? value.length : nextBreak;
-        const block = value.slice(lineStart, lineEnd);
-        const rows = block.split("\n");
-        const removeBullets = rows.every(row=>!row.trim() || /^\s*-\s+/.test(row));
-        const replacement = rows.map(row=>{
-          if(!row.trim()) return row;
-          return removeBullets ? row.replace(/^(\s*)-\s+/, "$1") : `- ${row}`;
-        }).join("\n");
-        area.setRangeText(replacement, lineStart, lineEnd, "select");
-      }
-      area.focus();
-      area.dispatchEvent(new Event("input", {bubbles:true}));
+      const editor = document.getElementById(btn.dataset.target);
+      if(!editor) return;
+      editor.focus();
+      document.execCommand("styleWithCSS", false, false);
+      document.execCommand(btn.dataset.action === "bold" ? "bold" : "insertUnorderedList", false, null);
+      editor.dispatchEvent(new Event("input", {bubbles:true}));
     };
   });
 }
@@ -3157,7 +3208,7 @@ function renderDsaQuestions(){
     btn.onclick = ()=>{
       const key = btn.dataset.key;
       const idSafe = key.replaceAll('::','-');
-      const body = document.getElementById(`notebody-${idSafe}`).value.trim();
+      const body = getNoteEditorBody(`notebody-${idSafe}`);
       const note = normalizeNoteObject(state.dsaNotes[key]);
       note.body = body;
       const savedLink = appendLinkDraft(note.links, idSafe);
@@ -3177,7 +3228,7 @@ function renderDsaQuestions(){
       const url = document.getElementById(`linkurl-${idSafe}`).value.trim();
       if(!url) return;
       const note = normalizeNoteObject(state.dsaNotes[key]);
-      note.body = document.getElementById(`notebody-${idSafe}`).value.trim();
+      note.body = getNoteEditorBody(`notebody-${idSafe}`);
       if(!note.links.some(link=>link.url === url && link.tag === tag)) note.links.push({tag, url});
       state.dsaNotes[key] = note;
       save();
@@ -3606,7 +3657,7 @@ function bindSystemDesignInlineNotes(){
     btn.onclick = ()=>{
       const key = btn.dataset.key;
       const idSafe = key.replaceAll("::","-");
-      const body = document.getElementById(`sdnotebody-${idSafe}`).value.trim();
+      const body = getNoteEditorBody(`sdnotebody-${idSafe}`);
       const note = normalizeNoteObject(state.sdNotes[key]);
       note.body = body;
       const savedLink = appendLinkDraft(note.links, idSafe);
@@ -3626,7 +3677,7 @@ function bindSystemDesignInlineNotes(){
       const url = document.getElementById(`linkurl-${idSafe}`).value.trim();
       if(!url) return;
       const note = normalizeNoteObject(state.sdNotes[key]);
-      note.body = document.getElementById(`sdnotebody-${idSafe}`).value.trim();
+      note.body = getNoteEditorBody(`sdnotebody-${idSafe}`);
       if(!note.links.some(link=>link.url === url && link.tag === tag)) note.links.push({tag, url});
       state.sdNotes[key] = note;
       save();
