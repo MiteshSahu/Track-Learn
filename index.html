@@ -340,16 +340,6 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 }
 .note-format-btn:hover{background:var(--accent-soft);border-color:#9bd7a9;color:var(--accent);}
 .note-editor textarea{border-radius:0 0 8px 8px!important;margin-bottom:0!important;}
-.note-preview{
-  margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;
-  background:#fff;color:var(--text);font-size:.82rem;line-height:1.55;
-}
-.note-preview:empty{display:none;}
-.note-preview p{margin:0 0 6px;}
-.note-preview p:last-child{margin-bottom:0;}
-.note-preview ul{margin:0;padding-left:20px;}
-.note-preview li{margin:2px 0;}
-.note-preview strong{font-weight:900;color:#102019;}
 .topic-workspace{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start;}
 @media (max-width:1050px){.topic-workspace{grid-template-columns:1fr;}}
 .topic-main{position:relative;}
@@ -2469,11 +2459,9 @@ function autoResizeTextareas(){
   document.querySelectorAll("textarea").forEach(area=>{
     area.style.height = "auto";
     area.style.height = `${area.scrollHeight + 2}px`;
-    updateNotePreview(area);
     area.oninput = ()=> {
       area.style.height = "auto";
       area.style.height = `${area.scrollHeight + 2}px`;
-      updateNotePreview(area);
       markNearestSaveButtonDirty(area);
     };
   });
@@ -2632,24 +2620,6 @@ function linkFormHTML(key, idSafe, open, cls){
     </div>`;
 }
 
-function renderNoteMarkdown(body){
-  const lines = String(body || "").split(/\r?\n/);
-  let html = "", listOpen = false;
-  const inline = line=>escapeHTML(line).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  lines.forEach(line=>{
-    const bullet = line.match(/^\s*-\s+(.*)$/);
-    if(bullet){
-      if(!listOpen){ html += "<ul>"; listOpen = true; }
-      html += `<li>${inline(bullet[1])}</li>`;
-      return;
-    }
-    if(listOpen){ html += "</ul>"; listOpen = false; }
-    if(line.trim()) html += `<p>${inline(line)}</p>`;
-  });
-  if(listOpen) html += "</ul>";
-  return html;
-}
-
 function noteEditorHTML(id, body, placeholder){
   return `
     <div class="note-editor">
@@ -2658,13 +2628,7 @@ function noteEditorHTML(id, body, placeholder){
         <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
       </div>
       <textarea id="${id}" placeholder="${escapeAttr(placeholder)}">${escapeHTML(body || "")}</textarea>
-      <div class="note-preview" data-preview-for="${id}">${renderNoteMarkdown(body)}</div>
     </div>`;
-}
-
-function updateNotePreview(area){
-  const preview = document.querySelector(`[data-preview-for="${area.id}"]`);
-  if(preview) preview.innerHTML = renderNoteMarkdown(area.value);
 }
 
 function bindNoteFormatting(){
