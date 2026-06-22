@@ -3,9 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f3f7f2">
 <title>Track &amp; Learn — Mitesh's Prep Tracker</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="shortcut icon" href="favicon.svg">
+<script>
+(()=>{
+  const saved = localStorage.getItem("track_learn_theme");
+  const theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.dataset.theme = theme;
+})();
+</script>
 <style>
 :root{
   --bg:#f3f7f2;
@@ -82,7 +90,21 @@ a:hover{text-decoration:underline;}
   border-radius:999px;padding:9px 14px;font-weight:800;cursor:pointer;
   box-shadow:var(--shadow);
 }
-.auth-btn:hover{border-color:var(--accent);background:var(--accentSoft);}
+.auth-btn:hover{border-color:var(--accent);background:var(--accent-soft);}
+.theme-toggle{
+  width:48px;height:28px;padding:0;border:1px solid var(--border);border-radius:999px;
+  background:var(--panel2);cursor:pointer;position:relative;flex:0 0 auto;
+  box-shadow:var(--shadow);transition:background .2s ease,border-color .2s ease;
+}
+.theme-toggle:before{
+  content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--border);box-shadow:0 2px 6px rgba(19,32,24,.18);
+  transition:transform .2s ease,background .2s ease;
+}
+.theme-toggle:hover{border-color:var(--accent);}
+.theme-toggle:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent);outline-offset:2px;}
+html[data-theme="dark"] .theme-toggle{background:var(--accent-soft);border-color:#41634d;}
+html[data-theme="dark"] .theme-toggle:before{transform:translateX(20px);background:var(--accent);border-color:var(--accent);}
 
 /* ===== Progress Pie Overview ===== */
 .pie-widget{
@@ -871,6 +893,101 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .focus-item{display:flex;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:#f8f9fd;}
 .focus-item b{font-size:.86rem;}
 .focus-item span{font-family:var(--mono);font-size:.75rem;color:var(--muted);}
+
+/* ===== Dark theme ===== */
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1510;
+  --panel:#142019;
+  --panel2:#1a2a20;
+  --border:#2d4134;
+  --text:#edf6ef;
+  --muted:#9daf9f;
+  --accent:#58c77d;
+  --accent-soft:#1b3926;
+  --accent2:#08110b;
+  --accent2-soft:#17271d;
+  --danger:#f07878;
+  --grid0:#26372c;
+  --grid1:#285c38;
+  --grid2:#2e8748;
+  --grid3:#36ae5e;
+  --grid4:#62d484;
+  --shadow:0 1px 2px rgba(0,0,0,.24),0 18px 42px rgba(0,0,0,.22);
+}
+html[data-theme="dark"] body{background:var(--bg);color:var(--text);}
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .tabs{background:rgba(13,21,16,.9);}
+html[data-theme="dark"] .jump-tabs{background:rgba(13,21,16,.88);}
+html[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.68);}
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,
+html[data-theme="dark"] .note-edit-surface{
+  background:var(--panel);color:var(--text);border-color:var(--border);
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder{color:#788b7c;}
+html[data-theme="dark"] .pie-widget,
+html[data-theme="dark"] .pie-toggle .pie-center,
+html[data-theme="dark"] .edit-icon,
+html[data-theme="dark"] .modal-close,
+html[data-theme="dark"] .nested-row,
+html[data-theme="dark"] .search-results,
+html[data-theme="dark"] .search-result,
+html[data-theme="dark"] .donut-card,
+html[data-theme="dark"] .donut-card.dsa-donut-card,
+html[data-theme="dark"] .donut-meta .metric,
+html[data-theme="dark"] .difficulty-tile,
+html[data-theme="dark"] .difficulty-row,
+html[data-theme="dark"] .tree-node-card,
+html[data-theme="dark"] .tree-zoom-controls,
+html[data-theme="dark"] .tree-reset-btn,
+html[data-theme="dark"] .tree-hint,
+html[data-theme="dark"] .tree-node,
+html[data-theme="dark"] .filter-btn,
+html[data-theme="dark"] .company-card{
+  background:var(--panel);color:var(--text);
+}
+html[data-theme="dark"] .topic-note-panel,
+html[data-theme="dark"] .resource-note-panel,
+html[data-theme="dark"] .q-note-panel,
+html[data-theme="dark"] .focus-item{background:#101b15;}
+html[data-theme="dark"] .note-editor-toolbar{background:var(--panel2);}
+html[data-theme="dark"] .note-format-btn{background:var(--panel);color:var(--text);}
+html[data-theme="dark"] .link-chip{background:var(--accent-soft);border-color:#326244;}
+html[data-theme="dark"] .subtopic-card.done,
+html[data-theme="dark"] .q-card.done,
+html[data-theme="dark"] .resource-item.done{background:#152b1d;border-color:#3b8050;}
+html[data-theme="dark"] .donut:before,
+html[data-theme="dark"] .dsa-donut-card .donut:before{background:var(--panel2);}
+html[data-theme="dark"] .weekly-chart .axis{stroke:var(--border);}
+html[data-theme="dark"] .weekly-chart .dot{fill:var(--panel);}
+html[data-theme="dark"] .donut{
+  background:conic-gradient(#28a85a 0 calc(var(--easy)*1%),#f4b83f calc(var(--easy)*1%) calc((var(--easy) + var(--medium))*1%),#df4d4d calc((var(--easy) + var(--medium))*1%) calc(var(--solved)*1%),var(--grid0) calc(var(--solved)*1%) 100%);
+}
+html[data-theme="dark"] .tree-canvas-viewport{background:#101b17;}
+html[data-theme="dark"] .tree-node-card.root{background:#07100a;border-color:#31513b;}
+html[data-theme="dark"] .tree-node-card.complete{background:var(--accent-soft);}
+html[data-theme="dark"] .tree-node-bar{background:var(--panel2);}
+html[data-theme="dark"] .tree-node:before{background:#1b2920;border-color:#405547;box-shadow:0 0 0 6px var(--panel);}
+html[data-theme="dark"] .ring:after{background:var(--panel);}
+html[data-theme="dark"] .ring{background:conic-gradient(var(--accent) calc(var(--pct)*1%),var(--panel2) 0);}
+html[data-theme="dark"] .pie-toggle{filter:drop-shadow(0 12px 24px rgba(0,0,0,.35));}
+html[data-theme="dark"] .edit-mode-toggle.active{background:#3a2d13;border-color:#725c26;color:#ffd778;}
+html[data-theme="dark"] .edit-icon.delete:hover{background:#3a1c1c;border-color:#704040;}
+html[data-theme="dark"] .revision-box{background:#351c1c;border-color:#674040;}
+html[data-theme="dark"] .revision-box.r1{background:#352b16;border-color:#65542d;}
+html[data-theme="dark"] .revision-box.r2{background:#1b3321;border-color:#396747;}
+html[data-theme="dark"] .revision-box.r3{background:#173923;border-color:#3e8052;}
+html[data-theme="dark"] .diff-cycle.easy{background:#183725;color:#79dda0;border-color:#356847;}
+html[data-theme="dark"] .diff-cycle.medium{background:#3a2d13;color:#ffd778;border-color:#725c26;}
+html[data-theme="dark"] .diff-cycle.hard{background:#3a1c1c;color:#ff9a9a;border-color:#704040;}
+html[data-theme="dark"] .btn.unsaved{background:#d49b2d;color:#101810;}
+html[data-theme="dark"] .tree-node-card.root .tree-node-title,
+html[data-theme="dark"] .tree-node-card.root{color:#fff;}
+html[data-theme="dark"] .tree-node:hover{border-color:var(--accent);}
+html[data-theme="dark"] .activity-month .month-label{color:var(--muted);}
 @media (max-width:700px){
   .tree-head{flex-direction:column;}
   .journey-tree{padding-left:34px;}
@@ -924,6 +1041,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;padding:30px 0;}
   </div>
   <div class="top-actions">
     <div class="streak-pill">Current streak: <b id="streakCount">0</b> days</div>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark theme" aria-pressed="false" title="Switch to dark theme"></button>
     <button class="auth-btn" id="authButton">Sign in</button>
     <div class="json-status warn" id="jsonStatus" title="Database health: checking"></div>
   </div>
@@ -1396,7 +1514,28 @@ const COMPANY_CATALOG = [
 const STORE_KEY = "track_learn_state_v1";
 const STATE_SCHEMA_VERSION = 2;
 const ACTIVE_TAB_KEY = "track_learn_active_tab";
+const THEME_KEY = "track_learn_theme";
 const SUPABASE_STATE_TABLE = "track_learn_profiles";
+function applyTheme(theme, persist=false){
+  const next = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = next;
+  if(persist) localStorage.setItem(THEME_KEY, next);
+  const toggle = document.getElementById("themeToggle");
+  const isDark = next === "dark";
+  if(toggle){
+    const label = isDark ? "Switch to light theme" : "Switch to dark theme";
+    toggle.setAttribute("aria-label", label);
+    toggle.setAttribute("aria-pressed", String(isDark));
+    toggle.title = label;
+  }
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", isDark ? "#0d1510" : "#f3f7f2");
+}
+function bindThemeToggle(){
+  const toggle = document.getElementById("themeToggle");
+  if(!toggle) return;
+  applyTheme(document.documentElement.dataset.theme);
+  toggle.onclick = ()=>applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+}
 function stableSlug(value){
   return String(value || "")
     .toLowerCase()
@@ -4529,6 +4668,7 @@ updateStreak();
 renderPieWidget();
 bindPieWidget();
 bindSupabaseAuth();
+bindThemeToggle();
 
 </script>
 </body>
