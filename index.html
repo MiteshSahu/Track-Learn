@@ -3474,6 +3474,117 @@ function findCustomDsaQuestion(cat, keyOrId){
   return (state.customDsaQuestions[cat] || []).find(item=>item.id === id);
 }
 
+function moveDsaQuestionState(oldKey, newKey){
+  moveStateKey(state.dsaDone, oldKey, newKey);
+  moveStateKey(state.dsaNotes, oldKey, newKey);
+  moveStateKey(state.dsaRevisions, oldKey, newKey);
+  moveStateKey(state.dsaDifficulty, oldKey, newKey);
+  moveStateKey(state.edits.dsaQuestionLabels, oldKey, newKey);
+  openNotePanels[newKey] = openNotePanels[newKey] || openNotePanels[oldKey];
+  openDsaLinkInputs[newKey] = openDsaLinkInputs[newKey] || openDsaLinkInputs[oldKey];
+  delete openNotePanels[oldKey];
+  delete openDsaLinkInputs[oldKey];
+}
+
+function removeDsaOrderKey(cat, key){
+  if(!state.edits.dsaQuestionOrder[cat]) return;
+  state.edits.dsaQuestionOrder[cat] = state.edits.dsaQuestionOrder[cat].filter(itemKey=>itemKey !== key);
+}
+
+function addDsaOrderKey(cat, key){
+  const order = state.edits.dsaQuestionOrder[cat] || [];
+  if(!order.includes(key)) order.push(key);
+  state.edits.dsaQuestionOrder[cat] = order;
+}
+
+function openDsaQuestionEditModal({kind, cat, key}){
+  const isCustom = kind === "custom";
+  const customItem = isCustom ? findCustomDsaQuestion(cat, key) : null;
+  const item = isCustom
+    ? {title:customItem?.title || "", difficulty:state.dsaDifficulty[key] || customItem?.difficulty || "medium", link:customItem?.link || ""}
+    : getDsaQuestionItems(cat).find(q=>q.key === key);
+  if(!item) return;
+  const currentTitle = isCustom ? item.title : (state.edits.dsaQuestionLabels[key] || item.title || "");
+  const currentDifficulty = state.dsaDifficulty[key] || item.difficulty || "medium";
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay open";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <button class="modal-close" type="button" title="Close">×</button>
+      <h3>Edit DSA Question</h3>
+      <p class="modal-help">Rename the question, change its difficulty, or move it to another DSA category. Use the new category field when the category does not exist yet.</p>
+      <div class="modal-fields">
+        <input class="wide" type="text" id="editDsaQuestionTitle" value="${escapeAttr(currentTitle)}" placeholder="Question name">
+        <select id="editDsaQuestionCategory">
+          ${getDsaCategoryKeys().map(catKey=>`<option value="${catKey}" ${catKey === cat ? "selected" : ""}>${escapeHTML(getDsaCategoryLabel(catKey))}</option>`).join("")}
+        </select>
+        <input class="wide" type="text" id="editDsaNewCategory" placeholder="Or create new category, e.g. Sliding Window">
+        <select id="editDsaQuestionDifficulty">
+          ${["easy","medium","hard"].map(diff=>`<option value="${diff}" ${diff === currentDifficulty ? "selected" : ""}>${diff[0].toUpperCase()}${diff.slice(1)}</option>`).join("")}
+        </select>
+        ${isCustom ? `<input class="wide" type="text" id="editDsaQuestionLink" value="${escapeAttr(customItem?.link || "")}" placeholder="YouTube link optional">` : ""}
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" id="cancelEditDsaQuestion">Cancel</button>
+        <button class="btn" id="saveEditDsaQuestion">Save Changes</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=>overlay.remove();
+  overlay.querySelector(".modal-close").onclick = close;
+  overlay.querySelector("#cancelEditDsaQuestion").onclick = close;
+  overlay.onclick = event=>{ if(event.target === overlay) close(); };
+  overlay.querySelector("#editDsaQuestionTitle").focus();
+  overlay.querySelector("#saveEditDsaQuestion").onclick = ()=>{
+    const nextTitle = overlay.querySelector("#editDsaQuestionTitle").value.trim();
+    const newCategoryLabel = overlay.querySelector("#editDsaNewCategory").value.trim();
+    const targetCat = newCategoryLabel ? createDsaCategory(newCategoryLabel) : overlay.querySelector("#editDsaQuestionCategory").value;
+    const nextDifficulty = overlay.querySelector("#editDsaQuestionDifficulty").value;
+    if(!nextTitle || !targetCat || !getDsaCategory(targetCat)) return;
+    const movedCategory = targetCat !== cat;
+
+    if(isCustom){
+      const oldKey = dsaCustomKey(cat, customItem);
+      customItem.title = nextTitle;
+      customItem.difficulty = nextDifficulty;
+      const linkInput = overlay.querySelector("#editDsaQuestionLink");
+      if(linkInput) customItem.link = linkInput.value.trim();
+      if(movedCategory){
+        state.customDsaQuestions[cat] = (state.customDsaQuestions[cat] || []).filter(q=>q.id !== customItem.id);
+        if(!state.customDsaQuestions[targetCat]) state.customDsaQuestions[targetCat] = [];
+        state.customDsaQuestions[targetCat].push(customItem);
+        const newKey = dsaCustomKey(targetCat, customItem);
+        moveDsaQuestionState(oldKey, newKey);
+        removeDsaOrderKey(cat, oldKey);
+        addDsaOrderKey(targetCat, newKey);
+        state.dsaDifficulty[newKey] = nextDifficulty;
+        activeDsaCat = targetCat;
+      } else {
+        state.dsaDifficulty[oldKey] = nextDifficulty;
+      }
+    } else if(targetCat === cat){
+      state.edits.dsaQuestionLabels[key] = nextTitle;
+      state.dsaDifficulty[key] = nextDifficulty;
+    } else {
+      const newItem = {id:makeCustomId(nextTitle), title:nextTitle, difficulty:nextDifficulty, link:getDsaCategory(targetCat)?.playlist || ""};
+      if(!state.customDsaQuestions[targetCat]) state.customDsaQuestions[targetCat] = [];
+      state.customDsaQuestions[targetCat].push(newItem);
+      const newKey = dsaCustomKey(targetCat, newItem);
+      state.edits.dsaQuestionHidden[key] = true;
+      moveDsaQuestionState(key, newKey);
+      removeDsaOrderKey(cat, key);
+      addDsaOrderKey(targetCat, newKey);
+      state.dsaDifficulty[newKey] = nextDifficulty;
+      activeDsaCat = targetCat;
+    }
+
+    save();
+    close();
+    renderPreservingScroll(renderDSAView);
+    if(movedCategory) requestAnimationFrame(()=>document.getElementById(`dsa-${targetCat}`)?.scrollIntoView({behavior:"smooth", block:"start"}));
+  };
+}
+
 function bindDsaEditControls(){
   document.querySelectorAll(".edit-item[data-kind='dsa-category']").forEach(btn=>{
     btn.onclick = (event)=>{
@@ -3505,12 +3616,7 @@ function bindDsaEditControls(){
   document.querySelectorAll(".edit-item[data-kind='dsa-built-in-question']").forEach(btn=>{
     btn.onclick = (event)=>{
       event.stopPropagation();
-      const current = state.edits.dsaQuestionLabels[btn.dataset.id] || btn.closest(".q-row")?.querySelector(".qname")?.textContent || "";
-      const next = prompt("Edit question name", current);
-      if(!next || !next.trim()) return;
-      state.edits.dsaQuestionLabels[btn.dataset.id] = next.trim();
-      save();
-      renderDSAView();
+      openDsaQuestionEditModal({kind:"built-in", cat:btn.dataset.cat, key:btn.dataset.id});
     };
   });
   document.querySelectorAll(".delete-item[data-kind='dsa-built-in-question']").forEach(btn=>{
@@ -3525,13 +3631,7 @@ function bindDsaEditControls(){
   document.querySelectorAll(".edit-item[data-kind='dsa-custom-question']").forEach(btn=>{
     btn.onclick = (event)=>{
       event.stopPropagation();
-      const item = findCustomDsaQuestion(btn.dataset.cat, btn.dataset.id);
-      if(!item) return;
-      const next = prompt("Edit question name", item.title);
-      if(!next || !next.trim()) return;
-      item.title = next.trim();
-      save();
-      renderDSAView();
+      openDsaQuestionEditModal({kind:"custom", cat:btn.dataset.cat, key:btn.dataset.id});
     };
   });
   document.querySelectorAll(".delete-item[data-kind='dsa-custom-question']").forEach(btn=>{
