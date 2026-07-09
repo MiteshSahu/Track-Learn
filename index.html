@@ -664,6 +664,14 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .revision-box.r1{color:#a66b00;}
 .revision-box.r2{color:#27833b;}
 .revision-box.r3{color:#157634;}
+.revisit-toggle{
+  border:1px solid #efcf8b;background:#fff8e6;color:#946200;
+  padding:6px 10px;border-radius:8px;font-size:.74rem;font-weight:900;
+  letter-spacing:.03em;cursor:pointer;flex-shrink:0;text-transform:uppercase;
+}
+.revisit-toggle:hover{background:#ffeebc;border-color:#e0b553;}
+.revisit-toggle.active{background:#ffe3a1;border-color:#d49b2d;color:#6e4600;}
+.q-card.revisit{border-color:#e3bb5d;background:linear-gradient(90deg,#fff8e6 0,#fffdf7 42%,var(--panel) 100%);}
 .difficulty-picker{display:flex;align-items:center;flex-shrink:0;}
 .diff-cycle{border:1px solid var(--border);font-size:.74rem;font-weight:900;letter-spacing:.04em;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;text-transform:uppercase;}
 .diff-cycle.easy{background:#e7f8ed;color:#147333;border-color:#b9e6c2;}
@@ -983,6 +991,10 @@ html[data-theme="dark"] .revision-box.r3{background:#173923;border-color:#3e8052
 html[data-theme="dark"] .diff-cycle.easy{background:#183725;color:#79dda0;border-color:#356847;}
 html[data-theme="dark"] .diff-cycle.medium{background:#3a2d13;color:#ffd778;border-color:#725c26;}
 html[data-theme="dark"] .diff-cycle.hard{background:#3a1c1c;color:#ff9a9a;border-color:#704040;}
+html[data-theme="dark"] .revisit-toggle{background:#352b16;border-color:#65542d;color:#ffd778;}
+html[data-theme="dark"] .revisit-toggle:hover,
+html[data-theme="dark"] .revisit-toggle.active{background:#4a3715;border-color:#9a7432;color:#ffe3a1;}
+html[data-theme="dark"] .q-card.revisit{background:linear-gradient(90deg,#241d10 0,#172219 44%,var(--panel) 100%);border-color:#7b622f;}
 html[data-theme="dark"] .btn.unsaved{background:#d49b2d;color:#101810;}
 html[data-theme="dark"] .tree-node-card.root .tree-node-title,
 html[data-theme="dark"] .tree-node-card.root{color:#fff;}
@@ -1478,6 +1490,125 @@ const SD_RESOURCES = {
 
 const DSA_TAB_TOPICS = Object.keys(DSA_CATEGORIES);
 
+const AMAZON_CATEGORIES = {
+  arraysgreedy: {
+    label: "Arrays & Greedy",
+    questions: [
+      {num:2357, title:"Make Array Zero by Subtracting Equal Amounts", difficulty:"easy"},
+      {num:1710, title:"Maximum Units on a Truck", difficulty:"easy"},
+      {num:767, title:"Reorganize String", difficulty:"medium"},
+      {num:2340, title:"Minimum Adjacent Swaps to Make a Valid Array", difficulty:"medium"},
+      {num:2214, title:"Minimum Health to Beat Game", difficulty:"medium"},
+      {num:1864, title:"Minimum Number of Swaps to Make the Binary String Alternating", difficulty:"medium"},
+      {num:2268, title:"Minimum Number of Keypresses", difficulty:"medium"},
+      {num:253, title:"Meeting Rooms II", difficulty:"medium"}
+    ]
+  },
+  twopointers: {
+    label: "Two Pointers / Sliding Window",
+    questions: [
+      {num:42, title:"Trapping Rain Water", difficulty:"hard"},
+      {num:2193, title:"Minimum Number of Moves to Make Palindrome", difficulty:"hard"},
+      {num:239, title:"Sliding Window Maximum", difficulty:"hard"},
+      {num:2398, title:"Maximum Number of Robots Within Budget", difficulty:"hard"}
+    ]
+  },
+  hashingsorting: {
+    label: "Hashing & Sorting",
+    questions: [
+      {num:49, title:"Group Anagrams", difficulty:"medium"},
+      {num:937, title:"Reorder Data in Log Files", difficulty:"medium"},
+      {num:1152, title:"Analyze User Website Visit Pattern", difficulty:"medium"},
+      {num:138, title:"Copy List with Random Pointer", difficulty:"medium"}
+    ]
+  },
+  stack: {
+    label: "Stack / Monotonic Stack",
+    questions: [
+      {num:2104, title:"Sum of Subarray Ranges", difficulty:"medium"},
+      {num:2355, title:"Maximum Number of Books You Can Take", difficulty:"hard"},
+      {num:2281, title:"Sum of Total Strength of Wizards", difficulty:"hard"}
+    ]
+  },
+  binarysearch: {
+    label: "Binary Search",
+    questions: [
+      {num:719, title:"Find K-th Smallest Pair Distance", difficulty:"hard"},
+      {num:2055, title:"Plates Between Candles", difficulty:"medium"}
+    ]
+  },
+  heap: {
+    label: "Heap / Priority Queue",
+    questions: [
+      {num:295, title:"Find Median from Data Stream", difficulty:"hard"},
+      {num:2386, title:"Find the K-Sum of an Array", difficulty:"hard"},
+      {num:973, title:"K Closest Points to Origin", difficulty:"medium"}
+    ]
+  },
+  prefixsum: {
+    label: "Prefix Sum",
+    questions: [
+      {num:2100, title:"Find Good Days to Rob the Bank", difficulty:"medium"},
+      {num:2222, title:"Number of Ways to Select Buildings", difficulty:"medium"}
+    ]
+  },
+  dp: {
+    label: "Dynamic Programming",
+    questions: [
+      {num:140, title:"Word Break II", difficulty:"hard"},
+      {num:1567, title:"Maximum Length of Subarray With Positive Product", difficulty:"medium"},
+      {num:2262, title:"Total Appeal of A String", difficulty:"hard"},
+      {num:2272, title:"Substring With Largest Variance", difficulty:"hard"},
+      {num:818, title:"Race Car", difficulty:"hard"},
+      {num:828, title:"Count Unique Characters of All Substrings of a Given String", difficulty:"hard"},
+      {num:472, title:"Concatenated Words", difficulty:"hard"}
+    ]
+  },
+  graphs: {
+    label: "Graphs (BFS / DFS / Topological Sort)",
+    questions: [
+      {num:994, title:"Rotting Oranges", difficulty:"medium"},
+      {num:200, title:"Number of Islands", difficulty:"medium"},
+      {num:207, title:"Course Schedule", difficulty:"medium"},
+      {num:127, title:"Word Ladder", difficulty:"hard"}
+    ]
+  },
+  trees: {
+    label: "Trees",
+    questions: [
+      {num:863, title:"All Nodes Distance K in Binary Tree", difficulty:"medium"},
+      {num:545, title:"Boundary of Binary Tree", difficulty:"medium"},
+      {num:1597, title:"Build Binary Expression Tree From Infix Expression", difficulty:"hard"}
+    ]
+  },
+  design: {
+    label: "Design",
+    questions: [
+      {num:146, title:"LRU Cache", difficulty:"medium"},
+      {num:1603, title:"Design Parking System", difficulty:"easy"},
+      {num:348, title:"Design Tic-Tac-Toe", difficulty:"medium"},
+      {num:588, title:"Design In-Memory File System", difficulty:"hard"},
+      {num:1628, title:"Design an Expression Tree With Evaluate Function", difficulty:"medium"},
+      {num:2102, title:"Sequentially Ordinal Rank Tracker", difficulty:"hard"}
+    ]
+  },
+  trie: {
+    label: "Trie",
+    questions: [
+      {num:1268, title:"Search Suggestions System", difficulty:"medium"}
+    ]
+  },
+  misc: {
+    label: "Math / String / Recursion / Enumeration",
+    questions: [
+      {num:273, title:"Integer to English Words", difficulty:"hard"},
+      {num:2221, title:"Find Triangular Sum of an Array", difficulty:"medium"},
+      {num:1291, title:"Sequential Digits", difficulty:"medium"}
+    ]
+  }
+};
+const AMAZON_TAB_TOPICS = Object.keys(AMAZON_CATEGORIES);
+
 const COMPANY_CATALOG = [
   ["Google",["Big Tech"]],["Microsoft",["Big Tech"]],["Amazon",["Big Tech"]],["Meta",["Big Tech"]],["Apple",["Big Tech"]],
   ["Atlassian",["Foreign Unicorns and Startups"]],["Sprinklr",["Indian Startups","Foreign Unicorns and Startups"]],["Salesforce",["Big Tech"]],
@@ -1562,6 +1693,16 @@ function dsaBuiltInKey(cat, title){
 function dsaCustomKey(cat, item){
   return `${cat}::custom::${item.id}`;
 }
+function amazonBuiltInKey(cat, question){
+  return `amazon::${cat}::lc-${question.num || stableSlug(question.title)}`;
+}
+function amazonCustomKey(cat, item){
+  return `amazon::${cat}::custom::${item.id}`;
+}
+function leetcodeLink(question){
+  if(question.link) return question.link;
+  return question.num ? `https://leetcode.com/problems/${stableSlug(question.title)}/` : "";
+}
 function sdResourceKey(prefix, label){
   return `${prefix}::${makeStableId("resource", label)}`;
 }
@@ -1580,9 +1721,18 @@ function createDefaultState(){
     topicNotes: {},
     dsaNotes: {},
     dsaRevisions: {},
+    dsaRevisit: {},
     dsaDifficulty: {},
+    amazonDone: {},
+    amazonLog: {},
+    amazonNotes: {},
+    amazonRevisions: {},
+    amazonRevisit: {},
+    amazonDifficulty: {},
     customDsaCategories: {},
     customDsaQuestions: {},
+    customAmazonCategories: {},
+    customAmazonQuestions: {},
     sdNotes: {},
     sdChaptersDone: {},
     sdItemsDone: {},
@@ -1600,6 +1750,11 @@ function createDefaultState(){
       dsaCategoryHidden: {},
       dsaQuestionLabels: {},
       dsaQuestionHidden: {},
+      amazonCategoryLabels: {},
+      amazonCategoryHidden: {},
+      amazonQuestionLabels: {},
+      amazonQuestionHidden: {},
+      amazonQuestionOrder: {},
       sdLabels: {},
       sdHidden: {},
       companyLabels: {},
@@ -1616,6 +1771,7 @@ function createDefaultState(){
     defaults.customTopics[key] = [];
   });
   DSA_TAB_TOPICS.forEach(cat=>defaults.customDsaQuestions[cat] = []);
+  AMAZON_TAB_TOPICS.forEach(cat=>defaults.customAmazonQuestions[cat] = []);
   return defaults;
 }
 
@@ -1639,7 +1795,7 @@ function migrateState(s){
   const defaults = createDefaultState();
   s = {...defaults, ...(s && typeof s === "object" ? s : {})};
   s.schemaVersion = STATE_SCHEMA_VERSION;
-  ["subtopicDone","dsaDone","dsaLog","notes","topicNotes","dsaNotes","dsaRevisions","dsaDifficulty","customDsaCategories","customDsaQuestions","sdNotes","sdChaptersDone","sdItemsDone","customTopics","topicChildren","companyStatus","userSubjects","edits"].forEach(key=>{
+  ["subtopicDone","dsaDone","dsaLog","notes","topicNotes","dsaNotes","dsaRevisions","dsaRevisit","dsaDifficulty","amazonDone","amazonLog","amazonNotes","amazonRevisions","amazonRevisit","amazonDifficulty","customDsaCategories","customDsaQuestions","customAmazonCategories","customAmazonQuestions","sdNotes","sdChaptersDone","sdItemsDone","customTopics","topicChildren","companyStatus","userSubjects","edits"].forEach(key=>{
     if(!s[key] || typeof s[key] !== "object" || Array.isArray(s[key])) s[key] = defaults[key] || {};
   });
   Object.keys(defaults.edits).forEach(key=>{
@@ -1695,6 +1851,7 @@ function migrateState(s){
       moveStateKey(s.dsaDone, legacyKey, stableKey);
       moveStateKey(s.dsaNotes, legacyKey, stableKey);
       moveStateKey(s.dsaRevisions, legacyKey, stableKey);
+      moveStateKey(s.dsaRevisit, legacyKey, stableKey);
       moveStateKey(s.dsaDifficulty, legacyKey, stableKey);
     });
     s.customDsaQuestions[cat].forEach((item, idx)=>{
@@ -1704,6 +1861,7 @@ function migrateState(s){
       moveStateKey(s.dsaDone, legacyKey, stableKey);
       moveStateKey(s.dsaNotes, legacyKey, stableKey);
       moveStateKey(s.dsaRevisions, legacyKey, stableKey);
+      moveStateKey(s.dsaRevisit, legacyKey, stableKey);
       moveStateKey(s.dsaDifficulty, legacyKey, stableKey);
     });
   });
@@ -1713,6 +1871,20 @@ function migrateState(s){
     if(!Array.isArray(s.customDsaQuestions[cat])) s.customDsaQuestions[cat] = [];
     s.customDsaQuestions[cat].forEach((item, idx)=>{
       if(!item.id) item.id = makeCustomId(item.title || `question-${idx + 1}`);
+    });
+  });
+  AMAZON_TAB_TOPICS.forEach(cat=>{
+    if(!Array.isArray(s.customAmazonQuestions[cat])) s.customAmazonQuestions[cat] = [];
+    s.customAmazonQuestions[cat].forEach((item, idx)=>{
+      if(!item.id) item.id = makeCustomId(item.title || `amazon-question-${idx + 1}`);
+    });
+  });
+  Object.keys(s.customAmazonCategories || {}).forEach(cat=>{
+    if(!s.customAmazonCategories[cat].id) s.customAmazonCategories[cat].id = cat;
+    if(!s.customAmazonCategories[cat].label) s.customAmazonCategories[cat].label = cat;
+    if(!Array.isArray(s.customAmazonQuestions[cat])) s.customAmazonQuestions[cat] = [];
+    s.customAmazonQuestions[cat].forEach((item, idx)=>{
+      if(!item.id) item.id = makeCustomId(item.title || `amazon-question-${idx + 1}`);
     });
   });
   SD_RESOURCES.book.chapters.forEach((label, idx)=>{
@@ -1859,6 +2031,36 @@ function createDsaCategory(label){
   }
   state.customDsaCategories[key] = {id:key, label:cleanLabel, playlist:"", questions:[]};
   state.customDsaQuestions[key] = [];
+  return key;
+}
+function getAmazonCategoryKeys(){
+  const builtIns = AMAZON_TAB_TOPICS.filter(cat=>!isHidden("amazonCategoryHidden", cat));
+  const customKeys = Object.keys(state.customAmazonCategories || {}).filter(cat=>!AMAZON_CATEGORIES[cat] && !isHidden("amazonCategoryHidden", cat));
+  return [...builtIns, ...customKeys];
+}
+function getAmazonCategory(cat){
+  return AMAZON_CATEGORIES[cat] || (state.customAmazonCategories || {})[cat];
+}
+function getAmazonCategoryLabel(cat){
+  return editedLabel("amazonCategoryLabels", cat, getAmazonCategory(cat)?.label || cat);
+}
+function createAmazonCategory(label){
+  const cleanLabel = String(label || "").trim();
+  if(!cleanLabel) return "";
+  const baseKey = stableSlug(cleanLabel);
+  if(AMAZON_CATEGORIES[baseKey]) return baseKey;
+  const existing = Object.keys(state.customAmazonCategories || {}).find(cat=>{
+    const c = state.customAmazonCategories[cat];
+    return cat === baseKey || stableSlug(c?.label) === baseKey;
+  });
+  if(existing) return existing;
+  let key = baseKey;
+  let suffix = 2;
+  while(AMAZON_CATEGORIES[key] || state.customAmazonCategories[key]){
+    key = `${baseKey}-${suffix++}`;
+  }
+  state.customAmazonCategories[key] = {id:key, label:cleanLabel, questions:[]};
+  state.customAmazonQuestions[key] = [];
   return key;
 }
 function save(){
@@ -2029,6 +2231,7 @@ function appendLinkDraft(links, idSafe){
 function normalizeStoredNotes(s){
   Object.keys(s.topicNotes || {}).forEach(k=>s.topicNotes[k] = normalizeNoteObject(s.topicNotes[k]));
   Object.keys(s.dsaNotes || {}).forEach(k=>s.dsaNotes[k] = normalizeNoteObject(s.dsaNotes[k]));
+  Object.keys(s.amazonNotes || {}).forEach(k=>s.amazonNotes[k] = normalizeNoteObject(s.amazonNotes[k]));
   Object.keys(s.sdNotes || {}).forEach(k=>s.sdNotes[k] = normalizeNoteObject(s.sdNotes[k]));
   Object.values(s.customTopics || {}).forEach(items=>{
     (items || []).forEach(item=>{
@@ -2043,6 +2246,7 @@ function normalizeStoredNotes(s){
 const TAB_ORDER = [
   {key:"progress", label:"Progress Tree"},
   {key:"dsa", label:"DSA"},
+  {key:"amazon", label:"Amazon Top Questions"},
   {key:"corejava", label:"Core Java"},
   {key:"streams", label:"Java Streams"},
   {key:"multithreading", label:"Multithreading"},
@@ -3224,8 +3428,8 @@ function getDsaDifficultyCounts(){
   return counts;
 }
 
-function renderWeeklyChart(){
-  const wrap = document.getElementById("weeklyChart");
+function renderWeeklyChart(log=state.dsaLog, targetId="weeklyChart"){
+  const wrap = document.getElementById(targetId);
   if(!wrap) return;
   const today = new Date();
   const days = [];
@@ -3233,7 +3437,7 @@ function renderWeeklyChart(){
     const d = new Date(today);
     d.setDate(d.getDate()-i);
     const key = dateKey(d);
-    days.push({date:d, key, count:state.dsaLog[key] || 0});
+    days.push({date:d, key, count:log[key] || 0});
   }
   const max = Math.max(1, ...days.map(d=>d.count));
   const width = 900, height = 72, padX = 16, top = 8, bottom = 16;
@@ -3290,6 +3494,7 @@ function renderDsaQuestions(){
     const key = item.key;
     const doneInfo = state.dsaDone[key];
     const revCount = state.dsaRevisions[key] || 0;
+    const revisit = !!state.dsaRevisit[key];
     const difficulty = item.difficulty;
     const note = state.dsaNotes[key] || {};
     const noteLinks = note.links || [];
@@ -3298,7 +3503,7 @@ function renderDsaQuestions(){
     const linkOpen = !!openDsaLinkInputs[key];
 
     return `
-    <div class="q-card ${doneInfo?"done":""}" id="dsa-card-${key.replaceAll('::','-')}" data-order-key="${key}">
+    <div class="q-card ${doneInfo?"done":""} ${revisit?"revisit":""}" id="dsa-card-${key.replaceAll('::','-')}" data-order-key="${key}">
       <div class="q-row expandable-q-row" data-key="${key}">
         <input type="checkbox" class="dsa-check" data-key="${key}" ${doneInfo?"checked":""}>
         <div class="qname ${doneInfo?"done":""}">${escapeHTML(item.title)}</div>
@@ -3314,6 +3519,7 @@ function renderDsaQuestions(){
           <span class="rcount">${revCount}</span>
           <button class="rev-plus" data-key="${key}" title="Increase">+</button>
         </div>
+        <button class="revisit-toggle ${revisit?"active":""}" data-key="${key}" title="${revisit ? "Marked for revisit" : "Mark this question to revisit later"}">${revisit ? "Revisit" : "Mark revisit"}</button>
 
         ${hasNote ? `<span class="note-dot">Notes saved</span>` : ""}
         <a class="ytlink" href="${escapeAttr(item.link)}" target="_blank" rel="noopener">Watch</a>
@@ -3380,6 +3586,15 @@ function renderDsaQuestions(){
       state.dsaRevisions[key] = Math.max(0, (state.dsaRevisions[key]||0) - 1);
       save();
       renderDsaQuestions();
+    };
+  });
+  document.querySelectorAll(".revisit-toggle").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      if(state.dsaRevisit[key]) delete state.dsaRevisit[key];
+      else state.dsaRevisit[key] = true;
+      save();
+      renderPreservingScroll(renderDsaQuestions);
     };
   });
 
@@ -3478,6 +3693,7 @@ function moveDsaQuestionState(oldKey, newKey){
   moveStateKey(state.dsaDone, oldKey, newKey);
   moveStateKey(state.dsaNotes, oldKey, newKey);
   moveStateKey(state.dsaRevisions, oldKey, newKey);
+  moveStateKey(state.dsaRevisit, oldKey, newKey);
   moveStateKey(state.dsaDifficulty, oldKey, newKey);
   moveStateKey(state.edits.dsaQuestionLabels, oldKey, newKey);
   openNotePanels[newKey] = openNotePanels[newKey] || openNotePanels[oldKey];
@@ -3675,8 +3891,9 @@ function bindCreateDsaQuestion(){
   };
 }
 
-function renderHeatmap(){
-  const hm = document.getElementById("heatmap");
+function renderHeatmap(log=state.dsaLog, targetId="heatmap"){
+  const hm = document.getElementById(targetId);
+  if(!hm) return;
   const today = new Date();
   const startMonth = new Date(today.getFullYear(), today.getMonth() - 12, 1);
   const endMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -3698,7 +3915,7 @@ function renderHeatmap(){
       const col = Math.floor(dayOffset / 7) + 1;
       const row = d.getDay() + 1;
       const key = dateKey(d);
-      const count = state.dsaLog[key] || 0;
+      const count = log[key] || 0;
       let cls = "cell";
       if(count>=1 && count<2) cls += " l1";
       else if(count>=2 && count<4) cls += " l2";
@@ -3716,6 +3933,597 @@ function renderHeatmap(){
 
   hm.innerHTML = monthBlocks.join("");
   hm.closest(".heatmap-shell").scrollLeft = hm.closest(".heatmap-shell").scrollWidth;
+}
+
+/* ========================= AMAZON TOP QUESTIONS VIEW ========================= */
+
+let openAmazonNotePanels = {};
+let openAmazonLinkInputs = {};
+
+function getAmazonQuestionItems(cat){
+  const category = getAmazonCategory(cat) || {questions:[]};
+  const builtIn = (category.questions || []).map((q, idx)=>({
+    key:amazonBuiltInKey(cat, q),
+    originalTitle:q.title,
+    title:editedLabel("amazonQuestionLabels", amazonBuiltInKey(cat, q), q.title),
+    num:q.num || "",
+    link:leetcodeLink(q),
+    difficulty:state.amazonDifficulty[amazonBuiltInKey(cat, q)] || q.difficulty || "medium",
+    custom:false
+  })).filter(item=>!isHidden("amazonQuestionHidden", item.key));
+  const custom = (state.customAmazonQuestions[cat] || []).map(item=>{
+    const key = amazonCustomKey(cat, item);
+    return {
+      key,
+      title:item.title,
+      num:item.num || "",
+      id:item.id,
+      link:item.link || (item.num ? leetcodeLink(item) : ""),
+      difficulty:state.amazonDifficulty[key] || item.difficulty || "medium",
+      custom:true
+    };
+  });
+  return applySavedOrder([...builtIn, ...custom], state.edits.amazonQuestionOrder?.[cat], item=>item.key);
+}
+
+function allAmazonQuestionItems(){
+  return getAmazonCategoryKeys().flatMap(cat=>getAmazonQuestionItems(cat).map(item=>({...item, cat})));
+}
+
+function getAmazonDifficultyCounts(){
+  const counts = {total:{easy:0, medium:0, hard:0}, solved:{easy:0, medium:0, hard:0}};
+  allAmazonQuestionItems().forEach(item=>{
+    const diff = item.difficulty;
+    counts.total[diff]++;
+    if(state.amazonDone[item.key]) counts.solved[diff]++;
+  });
+  return counts;
+}
+
+function getAmazonProgress(){
+  const items = allAmazonQuestionItems();
+  const total = items.length;
+  const done = items.filter(item=>state.amazonDone[item.key]).length;
+  return {done, total, pct: total ? Math.round((done/total)*100) : 0};
+}
+
+function renderAmazonTopicChart(){
+  const wrap = document.getElementById("amazonTopicChart");
+  if(!wrap) return;
+  wrap.innerHTML = getAmazonCategoryKeys().map(cat=>{
+    const items = getAmazonQuestionItems(cat);
+    const total = items.length;
+    const done = items.filter(item=>state.amazonDone[item.key]).length;
+    const pct = total ? Math.round((done/total)*100) : 0;
+    return `
+    <div class="topic-bar-row">
+      <div class="tname">${getAmazonCategoryLabel(cat)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="bval">${done}/${total} (${pct}%)</div>
+    </div>`;
+  }).join("");
+}
+
+function renderAmazonView(){
+  const main = document.getElementById("mainArea");
+  const progress = getAmazonProgress();
+  const diffCounts = getAmazonDifficultyCounts();
+  const easyPct = progress.total ? (diffCounts.solved.easy/progress.total)*100 : 0;
+  const mediumPct = progress.total ? (diffCounts.solved.medium/progress.total)*100 : 0;
+  const hardPct = progress.total ? (diffCounts.solved.hard/progress.total)*100 : 0;
+
+  main.innerHTML = `
+  <div class="view active">
+    <div class="view-header">
+      <div>
+        <h2 class="view-title">Amazon Top Questions</h2>
+        <div class="view-desc">Pattern-wise Amazon frequently asked LeetCode questions with notes, revision, revisit, difficulty, and progress tracking.</div>
+      </div>
+      <div class="view-header-actions">
+        <button class="modal-trigger-btn" id="openAddAmazonModal">+ Create</button>
+        ${editModeButtonHTML()}
+      </div>
+    </div>
+
+    <div class="dsa-summary">
+      <div class="donut-card dsa-donut-card">
+        <div class="donut-wrap" style="--easy:${easyPct};--medium:${mediumPct};--hard:${hardPct};--solved:${progress.pct}">
+          <div class="donut"></div>
+          <div class="donut-center"><div><b>${progress.done}<span class="denom">/${progress.total}</span></b><span>✓ Solved</span></div></div>
+        </div>
+        <div class="donut-sub">${progress.total-progress.done} Remaining</div>
+        <div class="difficulty-stack">
+          <div class="difficulty-tile easy" title="Easy"><b>Easy</b><span>${diffCounts.solved.easy}/${diffCounts.total.easy}</span></div>
+          <div class="difficulty-tile medium" title="Medium"><b>Medium</b><span>${diffCounts.solved.medium}/${diffCounts.total.medium}</span></div>
+          <div class="difficulty-tile hard" title="Hard"><b>Hard</b><span>${diffCounts.solved.hard}/${diffCounts.total.hard}</span></div>
+        </div>
+      </div>
+      <div class="heatmap-card">
+        <h3>Daily Activity</h3>
+        <div class="heatmap-shell">
+          <div class="heatmap-wrap">
+            <div class="heatmap-days"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+            <div class="heatmap" id="amazonHeatmap"></div>
+          </div>
+        </div>
+        <div class="legend">
+          Less <div class="cell" style="background:var(--grid0)"></div>
+          <div class="cell" style="background:var(--grid1)"></div>
+          <div class="cell" style="background:var(--grid2)"></div>
+          <div class="cell" style="background:var(--grid3)"></div>
+          <div class="cell" style="background:var(--grid4)"></div> More
+        </div>
+      </div>
+      <div class="weekly-card">
+        <h3>Solved Today: ${state.amazonLog[todayStr()] || 0}</h3>
+        <div class="view-desc" style="margin:0;">Last 30 days · drag sideways to browse</div>
+        <div class="weekly-chart" id="amazonWeeklyChart"></div>
+      </div>
+      <div class="topic-chart-card">
+        <h3>Progress by Pattern</h3>
+        <div id="amazonTopicChart"></div>
+      </div>
+    </div>
+
+    <div class="topic-main" style="margin-top:18px;">
+      ${pageSearchHTML("amazon", "Search Amazon questions")}
+    </div>
+    <div class="dsa-cat-tabs" id="amazonCatTabs"></div>
+    <div class="cat-progress" id="amazonCatProgress"></div>
+    <div class="dsa-layout">
+      <div class="q-list" id="amazonQList"></div>
+    </div>
+
+    <div class="modal-overlay" id="addAmazonModalOverlay">
+      <div class="modal-box">
+        <button class="modal-close" id="closeAddAmazonModal" title="Close">×</button>
+        <h3>Create Amazon Question</h3>
+        <div class="modal-fields">
+          <input class="wide" type="text" id="newAmazonQuestion" placeholder="Question name">
+          <input type="number" id="newAmazonNumber" placeholder="LeetCode #">
+          <select id="newAmazonTopic">
+            ${getAmazonCategoryKeys().map(cat=>`<option value="${cat}">${getAmazonCategoryLabel(cat)}</option>`).join("")}
+          </select>
+          <input class="wide" type="text" id="newAmazonCategory" placeholder="Or create new pattern/category">
+          <select id="newAmazonDifficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <input class="wide" type="text" id="newAmazonLink" placeholder="Link optional; LeetCode link is auto-created from number">
+        </div>
+        <div class="modal-actions">
+          <button class="btn secondary" id="cancelAddAmazonModal">Cancel</button>
+          <button class="btn" id="addAmazonQuestionBtn">Add Question</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  renderWeeklyChart(state.amazonLog, "amazonWeeklyChart");
+  renderHeatmap(state.amazonLog, "amazonHeatmap");
+  renderAmazonTopicChart();
+  renderAmazonCatTabs();
+  renderAmazonQuestions();
+  bindCreateAmazonQuestion();
+  bindEditModeToggle(renderAmazonView);
+  bindPageSearch("amazon", allAmazonQuestionItems().map(item=>({
+    label:`${getAmazonCategoryLabel(item.cat)}: ${item.num ? item.num + ". " : ""}${item.title}`,
+    id:`amazon-card-${item.key.replaceAll("::","-")}`,
+    open:()=>{openAmazonNotePanels[item.key]=true; renderAmazonQuestions();}
+  })));
+}
+
+function renderAmazonCatTabs(){
+  const wrap = document.getElementById("amazonCatTabs");
+  if(!wrap) return;
+  wrap.innerHTML = getAmazonCategoryKeys().map(cat=>{
+    return `<button class="cat-btn" data-target="amazon-${cat}">${getAmazonCategoryLabel(cat)}</button>`;
+  }).join("");
+  document.querySelectorAll(".cat-btn[data-target]").forEach(btn=>{
+    btn.onclick = ()=>document.getElementById(btn.dataset.target)?.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+}
+
+function renderAmazonQuestions(){
+  const list = document.getElementById("amazonQList");
+  if(!list) return;
+  document.getElementById("amazonCatProgress").innerHTML = `Jump into any Amazon pattern below, or scroll through the full list.`;
+  list.innerHTML = getAmazonCategoryKeys().map(catKey=>{
+    const items = getAmazonQuestionItems(catKey);
+    const doneCount = items.filter(item=>state.amazonDone[item.key]).length;
+    return `
+    <section class="dsa-section" id="amazon-${catKey}" data-cat="${catKey}">
+      <div class="section-title-row">
+        <h3 class="dsa-section-title">${getAmazonCategoryLabel(catKey)} <span style="color:var(--muted);font-family:var(--mono);font-size:.78rem;">${doneCount}/${items.length}</span></h3>
+        ${editActionsHTML("amazon-category", catKey)}
+      </div>
+      ${items.map(item=>amazonQuestionCardHTML(catKey, item)).join("")}
+    </section>`;
+  }).join("");
+
+  document.querySelectorAll(".amazon-check").forEach(cb=>{
+    cb.onchange = ()=>{
+      const key = cb.dataset.key;
+      if(cb.checked){
+        const d = todayStr();
+        state.amazonDone[key] = d;
+        state.amazonLog[d] = (state.amazonLog[d]||0) + 1;
+      } else {
+        const d = state.amazonDone[key];
+        if(d && state.amazonLog[d]) state.amazonLog[d] = Math.max(0, state.amazonLog[d]-1);
+        delete state.amazonDone[key];
+      }
+      save();
+      renderPreservingScroll(renderAmazonView);
+    };
+  });
+  document.querySelectorAll(".amazon-diff-cycle").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      const order = ["easy","medium","hard"];
+      const current = btn.dataset.diff || "medium";
+      const next = order[(order.indexOf(current) + 1) % order.length];
+      state.amazonDifficulty[key] = next;
+      save();
+      renderPreservingScroll(renderAmazonView);
+    };
+  });
+  document.querySelectorAll(".amazon-rev-plus").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      state.amazonRevisions[key] = (state.amazonRevisions[key]||0) + 1;
+      save();
+      renderAmazonQuestions();
+    };
+  });
+  document.querySelectorAll(".amazon-rev-minus").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      state.amazonRevisions[key] = Math.max(0, (state.amazonRevisions[key]||0) - 1);
+      save();
+      renderAmazonQuestions();
+    };
+  });
+  document.querySelectorAll(".amazon-revisit-toggle").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      if(state.amazonRevisit[key]) delete state.amazonRevisit[key];
+      else state.amazonRevisit[key] = true;
+      save();
+      renderPreservingScroll(renderAmazonQuestions);
+    };
+  });
+  document.querySelectorAll(".expandable-amazon-row").forEach(row=>{
+    row.onclick = (event)=>{
+      if(event.target.closest("input, button, a")) return;
+      const key = row.dataset.key;
+      openAmazonNotePanels[key] = !openAmazonNotePanels[key];
+      renderPreservingScroll(renderAmazonQuestions);
+      autoResizeTextareas();
+    };
+  });
+  document.querySelectorAll(".close-amazon-note").forEach(btn=>{
+    btn.onclick = ()=>{
+      openAmazonNotePanels[btn.dataset.key] = false;
+      renderPreservingScroll(renderAmazonQuestions);
+    };
+  });
+  document.querySelectorAll(".save-amazon-note").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      const idSafe = key.replaceAll("::","-");
+      const note = normalizeNoteObject(state.amazonNotes[key]);
+      note.body = getNoteEditorBody(`amazon-notebody-${idSafe}`);
+      const savedLink = appendLinkDraft(note.links, `amazon-${idSafe}`);
+      state.amazonNotes[key] = note;
+      save();
+      openAmazonNotePanels[key] = true;
+      if(savedLink) openAmazonLinkInputs[key] = false;
+      clearSaveButtonDirty(btn);
+      renderPreservingScroll(renderAmazonQuestions);
+    };
+  });
+  document.querySelectorAll(".save-amazon-link").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      const idSafe = key.replaceAll("::","-");
+      const tag = document.getElementById(`linktag-amazon-${idSafe}`).value.trim() || "resource";
+      const url = document.getElementById(`linkurl-amazon-${idSafe}`).value.trim();
+      if(!url) return;
+      const note = normalizeNoteObject(state.amazonNotes[key]);
+      note.body = getNoteEditorBody(`amazon-notebody-${idSafe}`);
+      if(!note.links.some(link=>link.url === url && link.tag === tag)) note.links.push({tag, url});
+      state.amazonNotes[key] = note;
+      save();
+      openAmazonNotePanels[key] = true;
+      openAmazonLinkInputs[key] = false;
+      renderPreservingScroll(renderAmazonQuestions);
+    };
+  });
+  document.querySelectorAll(".delete-amazon-link").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      const note = normalizeNoteObject(state.amazonNotes[key]);
+      note.links.splice(+btn.dataset.linkIdx, 1);
+      state.amazonNotes[key] = note;
+      save();
+      renderPreservingScroll(renderAmazonQuestions);
+    };
+  });
+  document.querySelectorAll(".add-amazon-link").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      openAmazonLinkInputs[key] = !openAmazonLinkInputs[key];
+      renderPreservingScroll(renderAmazonQuestions);
+      autoResizeTextareas();
+    };
+  });
+  document.querySelectorAll(".expand-amazon-note").forEach(btn=>{
+    btn.onclick = ()=>{
+      btn.closest(".q-note-panel").classList.toggle("note-expanded");
+      btn.textContent = btn.closest(".q-note-panel").classList.contains("note-expanded") ? "Collapse" : "Expand";
+      autoResizeTextareas();
+    };
+  });
+  bindDragReorder(".dsa-section", ".q-card", (order, section)=>{
+    const cat = section.dataset.cat;
+    if(!cat) return;
+    state.edits.amazonQuestionOrder[cat] = order;
+    save();
+  });
+  bindAmazonEditControls();
+  autoResizeTextareas();
+}
+
+function amazonQuestionCardHTML(catKey, item){
+  const key = item.key;
+  const doneInfo = state.amazonDone[key];
+  const revCount = state.amazonRevisions[key] || 0;
+  const revisit = !!state.amazonRevisit[key];
+  const note = normalizeNoteObject(state.amazonNotes[key]);
+  const hasNote = !!(note.body || note.links.length);
+  const idSafe = key.replaceAll("::","-");
+  const displayTitle = `${item.num ? item.num + ". " : ""}${escapeHTML(item.title)}`;
+  return `
+  <div class="q-card ${doneInfo?"done":""} ${revisit?"revisit":""}" id="amazon-card-${idSafe}" data-order-key="${key}">
+    <div class="q-row expandable-amazon-row" data-key="${key}">
+      <input type="checkbox" class="amazon-check" data-key="${key}" ${doneInfo?"checked":""}>
+      <div class="qname ${doneInfo?"done":""}">${displayTitle}</div>
+      ${doneInfo ? `<div class="date-done">Done ${doneInfo}</div>` : ""}
+      <div class="difficulty-picker" aria-label="Difficulty">
+        <button class="diff-cycle amazon-diff-cycle ${item.difficulty}" data-key="${key}" data-diff="${item.difficulty}" title="Difficulty: ${item.difficulty} — click to change">${item.difficulty.charAt(0).toUpperCase()}</button>
+      </div>
+      <div class="revision-box ${revisionClass(revCount)}">
+        <span class="rlabel">Revised</span>
+        <button class="amazon-rev-minus" data-key="${key}" title="Decrease">−</button>
+        <span class="rcount">${revCount}</span>
+        <button class="amazon-rev-plus" data-key="${key}" title="Increase">+</button>
+      </div>
+      <button class="revisit-toggle amazon-revisit-toggle ${revisit?"active":""}" data-key="${key}" title="${revisit ? "Marked for revisit" : "Mark this question to revisit later"}">${revisit ? "Revisit" : "Mark revisit"}</button>
+      ${hasNote ? `<span class="note-dot">Notes saved</span>` : ""}
+      ${item.link ? `<a class="ytlink" href="${escapeAttr(item.link)}" target="_blank" rel="noopener">LeetCode</a>` : ""}
+      ${editActionsHTML(item.custom ? "amazon-custom-question" : "amazon-built-in-question", key, `data-cat="${catKey}"`)}
+    </div>
+    <div class="q-note-panel ${openAmazonNotePanels[key]?'open':''}" id="amazon-notepanel-${idSafe}">
+      ${noteEditorHTML(`amazon-notebody-${idSafe}`, note.body, "Write approach, pitfalls, edge cases, or revisit reason for this Amazon question...")}
+      <div class="link-chips">${noteLinksHTML(note.links, key, "delete-amazon-link")}</div>
+      ${linkFormHTML(key, `amazon-${idSafe}`, !!openAmazonLinkInputs[key], "save-amazon-link")}
+      <div class="row-actions">
+        <button class="btn small save-amazon-note" data-key="${key}">Save Note</button>
+        <button class="btn small secondary add-amazon-link" data-key="${key}">${openAmazonLinkInputs[key]?'Hide link':'Add link'}</button>
+        <button class="btn small secondary expand-amazon-note" data-key="${key}">Expand</button>
+        <button class="btn small secondary close-amazon-note" data-key="${key}">Close</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function findCustomAmazonQuestion(cat, keyOrId){
+  const id = String(keyOrId || "").includes("::custom::") ? String(keyOrId).split("::custom::")[1] : keyOrId;
+  return (state.customAmazonQuestions[cat] || []).find(item=>item.id === id);
+}
+
+function moveAmazonQuestionState(oldKey, newKey){
+  moveStateKey(state.amazonDone, oldKey, newKey);
+  moveStateKey(state.amazonNotes, oldKey, newKey);
+  moveStateKey(state.amazonRevisions, oldKey, newKey);
+  moveStateKey(state.amazonRevisit, oldKey, newKey);
+  moveStateKey(state.amazonDifficulty, oldKey, newKey);
+  moveStateKey(state.edits.amazonQuestionLabels, oldKey, newKey);
+  openAmazonNotePanels[newKey] = openAmazonNotePanels[newKey] || openAmazonNotePanels[oldKey];
+  openAmazonLinkInputs[newKey] = openAmazonLinkInputs[newKey] || openAmazonLinkInputs[oldKey];
+  delete openAmazonNotePanels[oldKey];
+  delete openAmazonLinkInputs[oldKey];
+}
+
+function removeAmazonOrderKey(cat, key){
+  if(!state.edits.amazonQuestionOrder[cat]) return;
+  state.edits.amazonQuestionOrder[cat] = state.edits.amazonQuestionOrder[cat].filter(itemKey=>itemKey !== key);
+}
+
+function addAmazonOrderKey(cat, key){
+  const order = state.edits.amazonQuestionOrder[cat] || [];
+  if(!order.includes(key)) order.push(key);
+  state.edits.amazonQuestionOrder[cat] = order;
+}
+
+function openAmazonQuestionEditModal({kind, cat, key}){
+  const isCustom = kind === "custom";
+  const customItem = isCustom ? findCustomAmazonQuestion(cat, key) : null;
+  const item = isCustom ? customItem : getAmazonQuestionItems(cat).find(q=>q.key === key);
+  if(!item) return;
+  const currentTitle = isCustom ? item.title : (state.edits.amazonQuestionLabels[key] || item.title || "");
+  const currentDifficulty = state.amazonDifficulty[key] || item.difficulty || "medium";
+  const currentNum = item.num || "";
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay open";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <button class="modal-close" type="button" title="Close">×</button>
+      <h3>Edit Amazon Question</h3>
+      <p class="modal-help">Rename, change difficulty, update LeetCode number/link, or move this question to another Amazon pattern.</p>
+      <div class="modal-fields">
+        <input class="wide" type="text" id="editAmazonTitle" value="${escapeAttr(currentTitle)}" placeholder="Question name">
+        <input type="number" id="editAmazonNum" value="${escapeAttr(currentNum)}" placeholder="LeetCode #">
+        <select id="editAmazonCategory">
+          ${getAmazonCategoryKeys().map(catKey=>`<option value="${catKey}" ${catKey === cat ? "selected" : ""}>${escapeHTML(getAmazonCategoryLabel(catKey))}</option>`).join("")}
+        </select>
+        <input class="wide" type="text" id="editAmazonNewCategory" placeholder="Or create new pattern/category">
+        <select id="editAmazonDifficulty">
+          ${["easy","medium","hard"].map(diff=>`<option value="${diff}" ${diff === currentDifficulty ? "selected" : ""}>${diff[0].toUpperCase()}${diff.slice(1)}</option>`).join("")}
+        </select>
+        <input class="wide" type="text" id="editAmazonLink" value="${escapeAttr(item.link || "")}" placeholder="Link optional">
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" id="cancelEditAmazon">Cancel</button>
+        <button class="btn" id="saveEditAmazon">Save Changes</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=>overlay.remove();
+  overlay.querySelector(".modal-close").onclick = close;
+  overlay.querySelector("#cancelEditAmazon").onclick = close;
+  overlay.onclick = event=>{ if(event.target === overlay) close(); };
+  overlay.querySelector("#editAmazonTitle").focus();
+  overlay.querySelector("#saveEditAmazon").onclick = ()=>{
+    const nextTitle = overlay.querySelector("#editAmazonTitle").value.trim();
+    const nextNumRaw = overlay.querySelector("#editAmazonNum").value.trim();
+    const nextNum = nextNumRaw ? Number(nextNumRaw) : "";
+    const newCategoryLabel = overlay.querySelector("#editAmazonNewCategory").value.trim();
+    const targetCat = newCategoryLabel ? createAmazonCategory(newCategoryLabel) : overlay.querySelector("#editAmazonCategory").value;
+    const nextDifficulty = overlay.querySelector("#editAmazonDifficulty").value;
+    const nextLink = overlay.querySelector("#editAmazonLink").value.trim();
+    if(!nextTitle || !targetCat || !getAmazonCategory(targetCat)) return;
+    const movedCategory = targetCat !== cat;
+
+    if(isCustom){
+      const oldKey = amazonCustomKey(cat, customItem);
+      customItem.title = nextTitle;
+      customItem.num = nextNum;
+      customItem.difficulty = nextDifficulty;
+      customItem.link = nextLink || (nextNum ? leetcodeLink({num:nextNum, title:nextTitle}) : "");
+      if(movedCategory){
+        state.customAmazonQuestions[cat] = (state.customAmazonQuestions[cat] || []).filter(q=>q.id !== customItem.id);
+        if(!state.customAmazonQuestions[targetCat]) state.customAmazonQuestions[targetCat] = [];
+        state.customAmazonQuestions[targetCat].push(customItem);
+        const newKey = amazonCustomKey(targetCat, customItem);
+        moveAmazonQuestionState(oldKey, newKey);
+        removeAmazonOrderKey(cat, oldKey);
+        addAmazonOrderKey(targetCat, newKey);
+        state.amazonDifficulty[newKey] = nextDifficulty;
+      } else {
+        state.amazonDifficulty[oldKey] = nextDifficulty;
+      }
+    } else if(movedCategory){
+      const newItem = {id:makeCustomId(nextTitle), title:nextTitle, num:nextNum || item.num, difficulty:nextDifficulty, link:nextLink || leetcodeLink({num:nextNum || item.num, title:nextTitle})};
+      if(!state.customAmazonQuestions[targetCat]) state.customAmazonQuestions[targetCat] = [];
+      state.customAmazonQuestions[targetCat].push(newItem);
+      const newKey = amazonCustomKey(targetCat, newItem);
+      state.edits.amazonQuestionHidden[key] = true;
+      moveAmazonQuestionState(key, newKey);
+      removeAmazonOrderKey(cat, key);
+      addAmazonOrderKey(targetCat, newKey);
+      state.amazonDifficulty[newKey] = nextDifficulty;
+    } else {
+      state.edits.amazonQuestionLabels[key] = nextTitle;
+      state.amazonDifficulty[key] = nextDifficulty;
+    }
+    save();
+    close();
+    renderPreservingScroll(renderAmazonView);
+    if(movedCategory) requestAnimationFrame(()=>document.getElementById(`amazon-${targetCat}`)?.scrollIntoView({behavior:"smooth", block:"start"}));
+  };
+}
+
+function bindAmazonEditControls(){
+  document.querySelectorAll(".edit-item[data-kind='amazon-category']").forEach(btn=>{
+    btn.onclick = event=>{
+      event.stopPropagation();
+      const cat = btn.dataset.id;
+      const next = prompt("Edit Amazon pattern name", getAmazonCategoryLabel(cat));
+      if(!next || !next.trim()) return;
+      if(state.customAmazonCategories[cat]) state.customAmazonCategories[cat].label = next.trim();
+      else state.edits.amazonCategoryLabels[cat] = next.trim();
+      save();
+      renderAmazonView();
+    };
+  });
+  document.querySelectorAll(".delete-item[data-kind='amazon-category']").forEach(btn=>{
+    btn.onclick = event=>{
+      event.stopPropagation();
+      const cat = btn.dataset.id;
+      if(!confirm("Delete this Amazon pattern from the visible list?")) return;
+      if(state.customAmazonCategories[cat]){
+        delete state.customAmazonCategories[cat];
+        delete state.customAmazonQuestions[cat];
+      } else {
+        state.edits.amazonCategoryHidden[cat] = true;
+      }
+      save();
+      renderAmazonView();
+    };
+  });
+  document.querySelectorAll(".edit-item[data-kind='amazon-built-in-question']").forEach(btn=>{
+    btn.onclick = event=>{
+      event.stopPropagation();
+      openAmazonQuestionEditModal({kind:"built-in", cat:btn.dataset.cat, key:btn.dataset.id});
+    };
+  });
+  document.querySelectorAll(".delete-item[data-kind='amazon-built-in-question']").forEach(btn=>{
+    btn.onclick = event=>{
+      event.stopPropagation();
+      if(!confirm("Delete this built-in Amazon question from the visible list? Your old progress stays in saved data.")) return;
+      state.edits.amazonQuestionHidden[btn.dataset.id] = true;
+      save();
+      renderAmazonView();
+    };
+  });
+  document.querySelectorAll(".edit-item[data-kind='amazon-custom-question']").forEach(btn=>{
+    btn.onclick = event=>{
+      event.stopPropagation();
+      openAmazonQuestionEditModal({kind:"custom", cat:btn.dataset.cat, key:btn.dataset.id});
+    };
+  });
+  document.querySelectorAll(".delete-item[data-kind='amazon-custom-question']").forEach(btn=>{
+    btn.onclick = event=>{
+      event.stopPropagation();
+      if(!confirm("Delete this Amazon question?")) return;
+      const cat = btn.dataset.cat;
+      const item = findCustomAmazonQuestion(cat, btn.dataset.id);
+      state.customAmazonQuestions[cat] = (state.customAmazonQuestions[cat] || []).filter(q=>q.id !== item?.id);
+      save();
+      renderAmazonView();
+    };
+  });
+}
+
+function bindCreateAmazonQuestion(){
+  const overlay = document.getElementById("addAmazonModalOverlay");
+  const openBtn = document.getElementById("openAddAmazonModal");
+  const closeBtn = document.getElementById("closeAddAmazonModal");
+  const cancelBtn = document.getElementById("cancelAddAmazonModal");
+  const btn = document.getElementById("addAmazonQuestionBtn");
+  if(openBtn) openBtn.onclick = ()=>overlay.classList.add("open");
+  if(closeBtn) closeBtn.onclick = ()=>overlay.classList.remove("open");
+  if(cancelBtn) cancelBtn.onclick = ()=>overlay.classList.remove("open");
+  if(overlay) overlay.onclick = event=>{ if(event.target === overlay) overlay.classList.remove("open"); };
+  if(!btn) return;
+  btn.onclick = ()=>{
+    const title = document.getElementById("newAmazonQuestion").value.trim();
+    const numRaw = document.getElementById("newAmazonNumber").value.trim();
+    const num = numRaw ? Number(numRaw) : "";
+    const newCategory = document.getElementById("newAmazonCategory")?.value.trim();
+    const cat = newCategory ? createAmazonCategory(newCategory) : document.getElementById("newAmazonTopic").value;
+    const difficulty = document.getElementById("newAmazonDifficulty").value;
+    const link = document.getElementById("newAmazonLink").value.trim() || (num ? leetcodeLink({num, title}) : "");
+    if(!title || !getAmazonCategory(cat)) return;
+    if(!state.customAmazonQuestions[cat]) state.customAmazonQuestions[cat] = [];
+    state.customAmazonQuestions[cat].push({id:makeCustomId(title), title, num, difficulty, link});
+    save();
+    renderAmazonView();
+    setTimeout(()=>document.getElementById(`amazon-${cat}`)?.scrollIntoView({behavior:"smooth", block:"start"}),0);
+  };
 }
 
 /* ========================= SYSTEM DESIGN VIEW ========================= */
@@ -4317,6 +5125,7 @@ function getProgressNodes(){
   return TAB_ORDER.filter(t=>t.key!=="progress").map((tab,idx)=>{
     let progress;
     if(tab.key==="dsa") progress = getDsaProgress();
+    else if(tab.key==="amazon") progress = getAmazonProgress();
     else if(tab.key==="systemdesign") progress = getSystemDesignProgress();
     else if(tab.key==="applications") progress = getApplicationsProgress();
     else if(tab.key==="personal") progress = getPersonalProgress();
@@ -4338,6 +5147,13 @@ function progressChildren(key){
       const qs = getDsaQuestionItems(cat);
       const done = qs.filter(item=>state.dsaDone[item.key]).length;
       return {label:getDsaCategoryLabel(cat), done, total:qs.length};
+    });
+  }
+  if(key === "amazon"){
+    return getAmazonCategoryKeys().map(cat=>{
+      const qs = getAmazonQuestionItems(cat);
+      const done = qs.filter(item=>state.amazonDone[item.key]).length;
+      return {label:getAmazonCategoryLabel(cat), done, total:qs.length};
     });
   }
   if(key === "systemdesign"){
@@ -4731,6 +5547,7 @@ function bindTreeInteractions(nodes){
 function renderView(key){
   if(key==="progress") renderProgressTreeView();
   else if(key==="dsa") renderDSAView();
+  else if(key==="amazon") renderAmazonView();
   else if(key==="systemdesign") renderSystemDesignView();
   else if(key==="applications") renderApplicationsView();
   else if(key==="personal") renderPersonalView();
@@ -4743,12 +5560,13 @@ function computeStreak(){
   let streak = 0;
   let d = new Date();
   let key = todayStr();
-  if(!state.dsaLog[key]){
+  const practicedOn = dayKey=>((state.dsaLog[dayKey] || 0) + (state.amazonLog?.[dayKey] || 0)) > 0;
+  if(!practicedOn(key)){
     d.setDate(d.getDate()-1);
   }
   while(true){
     const k = dateKey(d);
-    if(state.dsaLog[k] && state.dsaLog[k] > 0){
+    if(practicedOn(k)){
       streak++;
       d.setDate(d.getDate()-1);
     } else break;
