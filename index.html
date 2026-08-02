@@ -1219,6 +1219,58 @@ const TOPICS = {
       "Database deadlocks: detection, prevention & recovery"
     ]
   },
+  microservices: {
+    label: "Microservices",
+    desc: "Architecture, resilience, distributed data, messaging, observability, scaling, and production scenarios for microservices interviews.",
+    subtopics: [
+      "What are microservices, and when are they a better choice than a monolith?",
+      "What are the main benefits and tradeoffs of a microservices architecture?",
+      "How do you define service boundaries using business capabilities and bounded contexts?",
+      "What is the difference between a modular monolith, SOA, and microservices?",
+      "Why should every microservice own its data?",
+      "How do you avoid a distributed monolith?",
+      "How do you choose the right service granularity?",
+      "When should two services be merged rather than kept separate?",
+      "How do services discover and communicate with one another?",
+      "When would you choose synchronous REST/gRPC over asynchronous messaging?",
+      "What responsibilities belong in an API gateway?",
+      "How do timeouts, retries, exponential backoff, and jitter work together?",
+      "How does the circuit breaker pattern protect a distributed system?",
+      "What are bulkheads, fallbacks, and graceful degradation?",
+      "How do you make an API operation idempotent?",
+      "How do you version APIs without breaking existing consumers?",
+      "How do you propagate authentication and authorization across services?",
+      "How do you rate-limit requests in a distributed system?",
+      "Why are distributed transactions difficult in microservices?",
+      "Explain the Saga pattern and compare orchestration with choreography.",
+      "How does the transactional outbox pattern prevent dual-write failures?",
+      "What are eventual consistency and compensating transactions?",
+      "How do you handle duplicate, delayed, and out-of-order messages?",
+      "What do at-most-once, at-least-once, and exactly-once delivery mean in practice?",
+      "How would you evolve an event schema without breaking consumers?",
+      "How do Kafka partition keys affect ordering, throughput, and consumer load?",
+      "How do you trace one request across multiple microservices?",
+      "Which metrics, logs, traces, and alerts are essential for a microservice?",
+      "How do correlation IDs help with production debugging?",
+      "What are liveness, readiness, and startup probes?",
+      "How do you deploy a microservice safely using rolling, blue-green, or canary releases?",
+      "How do you test microservices: unit, integration, contract, component, and end-to-end tests?",
+      "What is consumer-driven contract testing, and when would you use it?",
+      "How do you autoscale a service, and which signals would you use?",
+      "How do you diagnose a cascading failure?",
+      "How do you manage configuration and secrets across environments?",
+      "One downstream service is responding slowly. How will you protect your service?",
+      "A payment request was processed twice. How will you prevent duplicate charging?",
+      "The database update succeeded, but Kafka publishing failed. How will you solve it?",
+      "A Kafka consumer processed a message but crashed before committing the offset. What happens?",
+      "An order was created, inventory was reserved, but payment failed. How will you restore consistency?",
+      "One Kafka consumer instance is processing significantly more traffic than others. How will you investigate?",
+      "An API works normally at low traffic but fails under high load. How will you debug it?",
+      "One microservice is down. Should the complete user request fail?",
+      "How would you break a large monolith into microservices?",
+      "Describe a real production incident you solved in a microservices environment."
+    ]
+  },
   kafka: {
     label: "Kafka",
     desc: "Distributed messaging — producers, consumers, partitions, and delivery guarantees.",
@@ -2254,6 +2306,7 @@ const TAB_ORDER = [
   {key:"solid", label:"SOLID Principles"},
   {key:"designpatterns", label:"Design Patterns"},
   {key:"sql", label:"SQL"},
+  {key:"microservices", label:"Microservices"},
   {key:"kafka", label:"Kafka"},
   {key:"spark", label:"Spark"},
   {key:"systemdesign", label:"System Design"},
@@ -2289,6 +2342,13 @@ let openTopicNotePanels = {}; // "topic::idx" -> bool
 let openTopicLinkInputs = {}; // "topic::idx" -> bool
 
 const TOPIC_CATEGORY_GROUPS = {
+  microservices: [
+    {id:"microservices-foundations", label:"Foundations & Decomposition", indices:[0,1,2,3,4,5,6,7]},
+    {id:"microservices-communication", label:"Communication, Security & Resilience", indices:[8,9,10,11,12,13,14,15,16,17]},
+    {id:"microservices-data", label:"Distributed Data & Messaging", indices:[18,19,20,21,22,23,24,25]},
+    {id:"microservices-operations", label:"Observability, Testing & Operations", indices:[26,27,28,29,30,31,32,33,34,35]},
+    {id:"microservices-scenarios", label:"Production Scenarios", indices:[36,37,38,39,40,41,42,43,44,45]}
+  ],
   designpatterns: [
     {id:"creational", label:"Creational", indices:[0,1,2,3]},
     {id:"structural", label:"Structural", indices:[4,5,6,7,8]},
