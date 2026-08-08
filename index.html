@@ -1271,6 +1271,41 @@ const TOPICS = {
       "Describe a real production incident you solved in a microservices environment."
     ]
   },
+  teradata: {
+    label: "Teradata Prep",
+    desc: "Topic-wise DSA questions for Teradata interview preparation, from core array patterns through advanced dynamic programming.",
+    subtopics: [
+      "Two Sum",
+      "3Sum",
+      "4Sum",
+      "First Missing Positive",
+      "Permutation in String",
+      "Continuous Subarray Sum",
+      "Longest Subarray of 1's After Deleting One Element",
+      "Find K Closest Elements",
+      "Maximum Number of Events That Can Be Attended",
+      "Reverse a Linked List",
+      "Reverse Nodes in k-Group",
+      "Flatten Binary Tree to Linked List",
+      "Maximum Depth of Binary Tree",
+      "Same Tree",
+      "Kth Smallest Element in a BST",
+      "Lowest Common Ancestor of a Binary Tree",
+      "Word Break II",
+      "Remove Boxes",
+      "Topological Sort",
+      "Rotten Oranges",
+      "Trapping Rain Water",
+      "Valid Parentheses",
+      "Binary Search",
+      "Longest Substring Without Repeating Characters",
+      "Number of Islands",
+      "Search in Rotated Sorted Array",
+      "Course Schedule",
+      "Coin Change",
+      "Kth Largest Element in an Array"
+    ]
+  },
   kafka: {
     label: "Kafka",
     desc: "Distributed messaging — producers, consumers, partitions, and delivery guarantees.",
@@ -2299,6 +2334,7 @@ const TAB_ORDER = [
   {key:"progress", label:"Progress Tree"},
   {key:"dsa", label:"DSA"},
   {key:"amazon", label:"Amazon Top Questions"},
+  {key:"teradata", label:"Teradata Prep"},
   {key:"corejava", label:"Core Java"},
   {key:"streams", label:"Java Streams"},
   {key:"multithreading", label:"Multithreading"},
@@ -2342,6 +2378,16 @@ let openTopicNotePanels = {}; // "topic::idx" -> bool
 let openTopicLinkInputs = {}; // "topic::idx" -> bool
 
 const TOPIC_CATEGORY_GROUPS = {
+  teradata: [
+    {id:"teradata-arrays", label:"Arrays & Hashing", indices:[0,1,2,3]},
+    {id:"teradata-sliding-window", label:"Sliding Window & Prefix Sum", indices:[4,5,6,23]},
+    {id:"teradata-search-greedy", label:"Binary Search, Greedy & Heaps", indices:[7,8,22,25,28]},
+    {id:"teradata-stacks", label:"Stacks & Monotonic Stack", indices:[20,21]},
+    {id:"teradata-linked-list", label:"Linked List", indices:[9,10]},
+    {id:"teradata-trees", label:"Binary Trees & BST", indices:[11,12,13,14,15]},
+    {id:"teradata-graphs", label:"Graphs", indices:[18,19,24,26]},
+    {id:"teradata-dp", label:"Dynamic Programming", indices:[16,17,27]}
+  ],
   microservices: [
     {id:"microservices-foundations", label:"Foundations & Decomposition", indices:[0,1,2,3,4,5,6,7]},
     {id:"microservices-communication", label:"Communication, Security & Resilience", indices:[8,9,10,11,12,13,14,15,16,17]},
