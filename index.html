@@ -295,6 +295,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .subtopic-card > .subtopic-row[data-drag-handle="true"]:active,
 .q-card > .q-row[data-drag-handle="true"]:active{cursor:grabbing;}
 .subtopic-card.done{border-color:#88d29a;background:#fbfffb;}
+.subtopic-card.revisit{border-color:#e3bb5d;background:linear-gradient(90deg,#fff8e6 0,#fffdf7 42%,var(--panel) 100%);}
 .subtopic-row{box-shadow:none;border:0;border-radius:0;}
 .subtopic-row .subtopic-title{flex:1;font-size:.9rem;font-weight:700;line-height:1.45;}
 .subtopic-row .subtopic-title.done{color:var(--text);text-decoration:none;}
@@ -677,6 +678,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .diff-cycle.easy{background:#e7f8ed;color:#147333;border-color:#b9e6c2;}
 .diff-cycle.medium{background:#fff4d8;color:#926000;border-color:#efd28b;}
 .diff-cycle.hard{background:#ffe8e8;color:#aa2929;border-color:#efb1b1;}
+.topic-difficulty{cursor:default;flex-shrink:0;}
 
 /* notes toggle + per-question note panel */
 .notes-toggle{
@@ -967,6 +969,7 @@ html[data-theme="dark"] .link-chip{background:var(--accent-soft);border-color:#3
 html[data-theme="dark"] .subtopic-card.done,
 html[data-theme="dark"] .q-card.done,
 html[data-theme="dark"] .resource-item.done{background:#152b1d;border-color:#3b8050;}
+html[data-theme="dark"] .subtopic-card.revisit{background:linear-gradient(90deg,#342a12 0,#261f12 42%,var(--panel) 100%);border-color:#8b6d2d;}
 html[data-theme="dark"] .donut:before,
 html[data-theme="dark"] .dsa-donut-card .donut:before{background:var(--panel2);}
 html[data-theme="dark"] .weekly-chart .axis{stroke:var(--border);}
@@ -1304,7 +1307,38 @@ const TOPICS = {
       "Course Schedule",
       "Coin Change",
       "Kth Largest Element in an Array"
-    ]
+    ],
+    difficulties: {
+      "Two Sum": "easy",
+      "3Sum": "medium",
+      "4Sum": "medium",
+      "First Missing Positive": "hard",
+      "Permutation in String": "medium",
+      "Continuous Subarray Sum": "medium",
+      "Longest Subarray of 1's After Deleting One Element": "medium",
+      "Find K Closest Elements": "medium",
+      "Maximum Number of Events That Can Be Attended": "medium",
+      "Reverse a Linked List": "easy",
+      "Reverse Nodes in k-Group": "hard",
+      "Flatten Binary Tree to Linked List": "medium",
+      "Maximum Depth of Binary Tree": "easy",
+      "Same Tree": "easy",
+      "Kth Smallest Element in a BST": "medium",
+      "Lowest Common Ancestor of a Binary Tree": "medium",
+      "Word Break II": "hard",
+      "Remove Boxes": "hard",
+      "Topological Sort": "medium",
+      "Rotten Oranges": "medium",
+      "Trapping Rain Water": "hard",
+      "Valid Parentheses": "easy",
+      "Binary Search": "easy",
+      "Longest Substring Without Repeating Characters": "medium",
+      "Number of Islands": "medium",
+      "Search in Rotated Sorted Array": "medium",
+      "Course Schedule": "medium",
+      "Coin Change": "medium",
+      "Kth Largest Element in an Array": "medium"
+    }
   },
   kafka: {
     label: "Kafka",
@@ -1806,6 +1840,7 @@ function createDefaultState(){
     dsaLog: {},
     notes: {},
     topicNotes: {},
+    topicRevisit: {},
     dsaNotes: {},
     dsaRevisions: {},
     dsaRevisit: {},
@@ -1882,7 +1917,7 @@ function migrateState(s){
   const defaults = createDefaultState();
   s = {...defaults, ...(s && typeof s === "object" ? s : {})};
   s.schemaVersion = STATE_SCHEMA_VERSION;
-  ["subtopicDone","dsaDone","dsaLog","notes","topicNotes","dsaNotes","dsaRevisions","dsaRevisit","dsaDifficulty","amazonDone","amazonLog","amazonNotes","amazonRevisions","amazonRevisit","amazonDifficulty","customDsaCategories","customDsaQuestions","customAmazonCategories","customAmazonQuestions","sdNotes","sdChaptersDone","sdItemsDone","customTopics","topicChildren","companyStatus","userSubjects","edits"].forEach(key=>{
+  ["subtopicDone","dsaDone","dsaLog","notes","topicNotes","topicRevisit","dsaNotes","dsaRevisions","dsaRevisit","dsaDifficulty","amazonDone","amazonLog","amazonNotes","amazonRevisions","amazonRevisit","amazonDifficulty","customDsaCategories","customDsaQuestions","customAmazonCategories","customAmazonQuestions","sdNotes","sdChaptersDone","sdItemsDone","customTopics","topicChildren","companyStatus","userSubjects","edits"].forEach(key=>{
     if(!s[key] || typeof s[key] !== "object" || Array.isArray(s[key])) s[key] = defaults[key] || {};
   });
   Object.keys(defaults.edits).forEach(key=>{
@@ -1919,6 +1954,7 @@ function migrateState(s){
       delete nextDone[legacyKey];
       moveStateKey(s.topicNotes, legacyKey, stableKey);
       moveStateKey(s.notes, legacyKey, stableKey);
+      moveStateKey(s.topicRevisit, legacyKey, stableKey);
     });
     s.subtopicDone[key] = nextDone;
     if(!Array.isArray(s.customTopics[key])) s.customTopics[key] = [];
@@ -2537,11 +2573,15 @@ function renderTopicView(topicKey){
     const childDone = children.filter(st=>st.done).length;
     const itemPct = childTotal ? Math.round((childDone / childTotal) * 100) : (doneMap[noteKey] ? 100 : 0);
     const isDone = childTotal ? childDone === childTotal && childTotal > 0 : !!doneMap[noteKey];
+    const difficulty = topic.difficulties?.[st];
+    const revisit = !!state.topicRevisit[noteKey];
     return {idx, key:noteKey, html:`
-    <div class="subtopic-card ${isDone?"done":""}" id="topic-card-${idSafe}" data-order-key="${noteKey}">
+    <div class="subtopic-card ${isDone?"done":""} ${revisit?"revisit":""}" id="topic-card-${idSafe}" data-order-key="${noteKey}">
     <div class="subtopic-row expandable-row" data-note-key="${noteKey}">
       <input type="checkbox" data-topic="${topicKey}" data-key="${noteKey}" class="subtopic-check" ${isDone?"checked":""}>
       <label class="subtopic-title ${isDone?"done":""}">${escapeHTML(displayTitle)}</label>
+      ${difficulty ? `<span class="diff-cycle topic-difficulty ${difficulty}" title="Difficulty: ${difficulty}">${difficulty.charAt(0).toUpperCase()}</span>` : ""}
+      ${topicKey === "teradata" ? `<button class="revisit-toggle topic-revisit-toggle ${revisit?"active":""}" data-key="${noteKey}" title="${revisit ? "Marked for revisit" : "Mark this question to revisit later"}">${revisit ? "Revisit" : "Mark revisit"}</button>` : ""}
       ${hasNote ? `<span class="note-dot">Notes saved</span>` : ""}
       ${editActionsHTML("topic-built-in", noteKey)}
     </div>
@@ -2654,6 +2694,7 @@ function renderTopicView(topicKey){
   bindTopicInlineNotes();
   bindCustomTopicControls(topicKey);
   bindTopicEditControls(topicKey);
+  bindTopicRevisit(topicKey);
   bindEditModeToggle(()=>renderTopicView(topicKey));
   bindJumpTabs();
   bindPageSearch(topicKey, [
@@ -2668,6 +2709,18 @@ function renderTopicView(topicKey){
     })
   ]);
   autoResizeTextareas();
+}
+
+function bindTopicRevisit(topicKey){
+  document.querySelectorAll(".topic-revisit-toggle").forEach(btn=>{
+    btn.onclick = ()=>{
+      const key = btn.dataset.key;
+      if(state.topicRevisit[key]) delete state.topicRevisit[key];
+      else state.topicRevisit[key] = true;
+      save();
+      renderPreservingScroll(()=>renderTopicView(topicKey));
+    };
+  });
 }
 
 function bindSubtopicChecks(){
