@@ -278,8 +278,22 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .todo-filters{display:flex;gap:7px;flex-wrap:wrap;}
 .todo-filter{border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:999px;padding:8px 13px;font-size:.76rem;font-weight:850;cursor:pointer;}
 .todo-filter.active,.todo-filter:hover{background:var(--accent-soft);border-color:#9bd7a9;color:var(--accent);}
-.todo-date-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;align-items:start;}
-.todo-date-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;}
+.todo-history{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px;margin-bottom:18px;overflow:hidden;}
+.todo-history-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:15px;}
+.todo-history-head h3{font-family:var(--serif);font-size:1.05rem;font-weight:850;margin-bottom:3px;}
+.todo-history-head p{font-size:.75rem;color:var(--muted);}
+.todo-history-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.67rem;color:var(--muted);font-weight:750;}
+.todo-history-legend span{display:flex;align-items:center;gap:5px;}.todo-history-legend i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.todo-history-scroll{overflow-x:auto;padding:4px 2px 8px;scrollbar-width:thin;}
+.todo-history-days{display:grid;grid-template-columns:repeat(30,minmax(30px,1fr));gap:8px;min-width:1070px;}
+.todo-history-day{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;}
+.todo-history-circle{width:29px;height:29px;border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.58rem;font-weight:900;box-shadow:0 2px 5px rgba(19,32,24,.1);}
+.todo-history-circle.green{background:#dff6e7;color:#147333;border-color:#76cc90;}.todo-history-circle.yellow{background:#fff3ce;color:#8a5b00;border-color:#e5bc4e;}.todo-history-circle.red{background:#ffe2e2;color:#a32626;border-color:#e06a6a;}.todo-history-circle.none{background:var(--panel2);color:var(--muted);border-color:var(--border);box-shadow:none;}
+.todo-history-day small{font-size:.57rem;color:var(--muted);text-transform:uppercase;white-space:nowrap;}
+.todo-board-shell{background:color-mix(in srgb,var(--panel) 58%,transparent);border:1px solid var(--border);border-radius:14px;padding:10px;position:relative;}
+.todo-board-hint{font-size:.68rem;color:var(--muted);font-weight:750;padding:2px 4px 9px;display:flex;justify-content:space-between;gap:10px;}
+.todo-date-grid{display:flex;flex-wrap:wrap;gap:16px;align-content:flex-start;align-items:flex-start;max-height:720px;overflow:auto;padding:3px 4px 18px;scroll-behavior:smooth;}
+.todo-date-card{flex:0 0 330px;background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;}
 .todo-date-card.is-today{border-color:#7bc38d;box-shadow:0 0 0 2px rgba(32,130,75,.09),var(--shadow);}
 .todo-card-head{display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid var(--border);background:var(--panel2);}
 .todo-calendar{width:46px;height:48px;border-radius:10px;background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
@@ -288,8 +302,12 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .todo-card-title{min-width:0;flex:1;}
 .todo-card-title h3{font-family:var(--serif);font-size:1rem;font-weight:850;}
 .todo-card-title p{font-size:.72rem;color:var(--muted);margin-top:2px;}
-.todo-card-count{font-family:var(--mono);font-size:.7rem;font-weight:900;color:var(--accent);}
+.todo-card-tools{display:flex;align-items:center;gap:7px;}.todo-card-count{font-family:var(--mono);font-size:.7rem;font-weight:900;color:var(--accent);}
+.todo-expand{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--accent);cursor:pointer;font-size:.9rem;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.todo-expand:hover{border-color:var(--accent);background:var(--accent-soft);}.todo-date-card.expanded .todo-expand{transform:rotate(180deg);}
 .todo-items{padding:7px;}
+.todo-more{border:0;border-top:1px dashed var(--border);background:transparent;color:var(--accent);font-size:.72rem;font-weight:850;width:100%;padding:10px;cursor:pointer;}
+.todo-more:hover{background:var(--accent-soft);}
 .todo-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:9px;transition:background .15s ease;}
 .todo-item:hover{background:var(--panel2);}
 .todo-item input{width:18px;height:18px;margin-top:1px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
@@ -303,10 +321,10 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .todo-item:hover .todo-item-actions,.todo-item-actions:focus-within{opacity:1;}
 .todo-icon-btn{width:27px;height:27px;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:7px;cursor:pointer;font-weight:900;}
 .todo-icon-btn:hover{color:var(--accent);border-color:var(--accent);}.todo-icon-btn.delete:hover{color:var(--danger);border-color:var(--danger);}
-.todo-empty{grid-column:1/-1;text-align:center;background:var(--panel);border:1px dashed var(--border);border-radius:14px;padding:46px 20px;color:var(--muted);}
+.todo-empty{width:100%;text-align:center;background:var(--panel);border:1px dashed var(--border);border-radius:14px;padding:46px 20px;color:var(--muted);}
 .todo-empty b{display:block;color:var(--text);font-family:var(--serif);font-size:1.1rem;margin-bottom:5px;}
 .todo-form-label{display:flex;flex-direction:column;gap:5px;flex:1;font-size:.7rem;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-@media (max-width:760px){.todo-hero{grid-template-columns:1fr}.todo-date-grid{grid-template-columns:1fr}.todo-item-actions{opacity:1;}}
+@media (max-width:760px){.todo-hero{grid-template-columns:1fr}.todo-date-card{flex-basis:calc(100% - 2px)}.todo-date-grid{max-height:680px}.todo-item-actions{opacity:1;}}
 
 /* ===== Generic Topic Tab (Core Java, Spring, etc.) ===== */
 .progress-overview{
@@ -5341,6 +5359,9 @@ function getApplicationsProgress(){
 /* ========================= TO DO ========================= */
 
 let todoFilter = "all";
+let expandedTodoDates = new Set();
+let todoShouldScrollLatest = true;
+let todoBoardScroll = {top:0,left:0};
 
 function todoDate(value){
   const [year,month,day] = String(value || todayStr()).split("-").map(Number);
@@ -5362,6 +5383,41 @@ function getTodoProgress(){
   const total = state.todos.length;
   const done = state.todos.filter(todo=>todo.done).length;
   return {done,total,pct:total ? Math.round(done/total*100) : 0};
+}
+
+function todoDayStatus(items){
+  if(!items.length) return {tone:"none",label:"No tasks",done:0,total:0,pct:0};
+  const done = items.filter(todo=>todo.done).length;
+  const incomplete = items.filter(todo=>!todo.done);
+  const pct = Math.round(done/items.length*100);
+  let tone;
+  if(incomplete.some(todo=>todo.priority==="high")) tone="red";
+  else if(incomplete.some(todo=>todo.priority==="medium")) tone="yellow";
+  else if(pct>50) tone="green";
+  else if(pct===50) tone="yellow";
+  else tone="red";
+  return {tone,label:`${done}/${items.length} completed (${pct}%)`,done,total:items.length,pct};
+}
+
+function todoHistoryHTML(){
+  const days=[];
+  const current=new Date();
+  for(let offset=29;offset>=0;offset--){
+    const day=new Date(current.getFullYear(),current.getMonth(),current.getDate()-offset,12);
+    const key=dateKey(day);
+    const items=state.todos.filter(todo=>todo.date===key);
+    days.push({key,day,status:todoDayStatus(items)});
+  }
+  const best=days.filter(item=>item.status.total).sort((a,b)=>b.status.done-a.status.done || b.status.pct-a.status.pct)[0];
+  return `<section class="todo-history">
+    <div class="todo-history-head">
+      <div><h3>Last 30 days</h3><p>${best?`Best day: ${best.day.toLocaleDateString(undefined,{month:"short",day:"numeric"})} · ${best.status.done} completed`:"Complete tasks to start building your history."}</p></div>
+      <div class="todo-history-legend"><span><i style="background:#76cc90"></i>Most completed</span><span><i style="background:#e5bc4e"></i>Half / medium missed</span><span><i style="background:#e06a6a"></i>None / high missed</span><span><i style="background:var(--border)"></i>No tasks</span></div>
+    </div>
+    <div class="todo-history-scroll" id="todoHistoryScroll"><div class="todo-history-days">
+      ${days.map(({key,day,status})=>`<div class="todo-history-day" title="${escapeAttr(day.toLocaleDateString(undefined,{weekday:"long",year:"numeric",month:"long",day:"numeric"}))}: ${escapeAttr(status.label)}"><div class="todo-history-circle ${status.tone}">${day.getDate()}</div><small>${day.toLocaleDateString(undefined,{month:"short"})}</small></div>`).join("")}
+    </div></div>
+  </section>`;
 }
 
 function renderTodoView(){
@@ -5388,14 +5444,16 @@ function renderTodoView(){
   const dateCards = Object.entries(grouped).map(([date,todos])=>{
     const parsed = todoDate(date);
     const done = todos.filter(todo=>todo.done).length;
-    return `<section class="todo-date-card ${date===today?"is-today":""}">
+    const expanded = expandedTodoDates.has(date);
+    const shownTodos = expanded ? todos : todos.slice(0,4);
+    return `<section class="todo-date-card ${date===today?"is-today":""} ${expanded?"expanded":""}" data-date="${date}">
       <div class="todo-card-head">
         <div class="todo-calendar"><small>${parsed.toLocaleDateString(undefined,{month:"short"})}</small><b>${parsed.getDate()}</b></div>
         <div class="todo-card-title"><h3>${todoDateLabel(date)}</h3><p>${parsed.toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})}</p></div>
-        <span class="todo-card-count">${done}/${todos.length}</span>
+        <div class="todo-card-tools"><span class="todo-card-count">${done}/${todos.length}</span><button class="todo-expand toggle-todo-date" data-date="${date}" title="${expanded?"Collapse":"Expand"} this day's checklist" aria-label="${expanded?"Collapse":"Expand"} checklist">⌄</button></div>
       </div>
       <div class="todo-items">
-        ${todos.map(todo=>`<div class="todo-item ${todo.done?"done":""}">
+        ${shownTodos.map(todo=>`<div class="todo-item ${todo.done?"done":""}">
           <input type="checkbox" class="todo-check" data-id="${escapeAttr(todo.id)}" ${todo.done?"checked":""} aria-label="Complete ${escapeAttr(todo.title)}">
           <div class="todo-item-main">
             <div class="todo-item-title">${escapeHTML(todo.title)}</div>
@@ -5406,6 +5464,7 @@ function renderTodoView(){
             <button class="todo-icon-btn delete delete-todo" data-id="${escapeAttr(todo.id)}" title="Delete task" aria-label="Delete task">×</button>
           </div>
         </div>`).join("")}
+        ${todos.length>4?`<button class="todo-more toggle-todo-date" data-date="${date}">${expanded?"Show fewer":`Show all ${todos.length} tasks`}</button>`:""}
       </div>
     </section>`;
   }).join("");
@@ -5431,17 +5490,28 @@ function renderTodoView(){
         <div class="todo-summary-item"><b>${overdue}</b><span>Overdue</span></div>
       </section>
     </div>
+    ${todoHistoryHTML()}
     <div class="todo-toolbar">
       <div class="todo-filters">
         ${[["all","All"],["today","Today"],["upcoming","Upcoming"],["overdue","Overdue"],["completed","Completed"]].map(([key,label])=>`<button class="todo-filter ${todoFilter===key?"active":""}" data-filter="${key}">${label}</button>`).join("")}
       </div>
     </div>
-    <div class="todo-date-grid">${dateCards || `<div class="todo-empty"><b>No tasks here</b><span>Add a task or choose another filter.</span></div>`}</div>
+    <div class="todo-board-shell">
+      <div class="todo-board-hint"><span>Dates flow left to right, then continue on the next row.</span><span>Newest cards are shown by default ↓</span></div>
+      <div class="todo-date-grid" id="todoDateGrid">${dateCards || `<div class="todo-empty"><b>No tasks here</b><span>Add a task or choose another filter.</span></div>`}</div>
+    </div>
   </div>`;
   bindTodoControls();
+  requestAnimationFrame(()=>{
+    const history=document.getElementById("todoHistoryScroll");
+    if(history) history.scrollLeft=history.scrollWidth;
+    const board=document.getElementById("todoDateGrid");
+    if(board && todoShouldScrollLatest){board.scrollTop=board.scrollHeight;board.scrollLeft=board.scrollWidth;todoShouldScrollLatest=false;}
+    else if(board){board.scrollTop=todoBoardScroll.top;board.scrollLeft=todoBoardScroll.left;}
+  });
 }
 
-function openTodoDialog(todo=null){
+function openTodoDialog(todo=null,defaultDate=todayStr()){
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay open";
   overlay.innerHTML = `<div class="modal-box">
@@ -5450,7 +5520,7 @@ function openTodoDialog(todo=null){
     <p class="modal-help">Choose the day and priority so your checklist stays focused.</p>
     <div class="modal-fields">
       <label class="todo-form-label wide">Task<input class="wide" id="todoTitle" type="text" maxlength="180" placeholder="What needs to be done?" value="${escapeAttr(todo?.title || "")}"></label>
-      <label class="todo-form-label">Date<input id="todoDate" type="date" value="${escapeAttr(todo?.date || todayStr())}"></label>
+      <label class="todo-form-label">Date<input id="todoDate" type="date" value="${escapeAttr(todo?.date || defaultDate)}"></label>
       <label class="todo-form-label">Priority<select id="todoPriority"><option value="high" ${todo?.priority==="high"?"selected":""}>High</option><option value="medium" ${!todo || todo.priority==="medium"?"selected":""}>Medium</option><option value="low" ${todo?.priority==="low"?"selected":""}>Low</option></select></label>
     </div>
     <div class="modal-actions"><button class="btn secondary" id="cancelTodo">Cancel</button><button class="btn" id="saveTodo">${todo?"Save changes":"Add task"}</button></div>
@@ -5466,7 +5536,7 @@ function openTodoDialog(todo=null){
     if(!title){overlay.querySelector("#todoTitle").focus();return;}
     if(!date){overlay.querySelector("#todoDate").focus();return;}
     if(todo){todo.title=title;todo.date=date;todo.priority=overlay.querySelector("#todoPriority").value;}
-    else state.todos.push({id:makeCustomId(title),title,date,priority:overlay.querySelector("#todoPriority").value,done:false});
+    else {state.todos.push({id:makeCustomId(title),title,date,priority:overlay.querySelector("#todoPriority").value,done:false});todoShouldScrollLatest=true;}
     save();close();renderTodoView();
   };
   overlay.querySelector("#saveTodo").onclick = submit;
@@ -5475,23 +5545,28 @@ function openTodoDialog(todo=null){
 }
 
 function bindTodoControls(){
+  const rememberBoardScroll=()=>{const board=document.getElementById("todoDateGrid");if(board)todoBoardScroll={top:board.scrollTop,left:board.scrollLeft};};
   document.getElementById("openTodoModal").onclick = ()=>openTodoDialog();
-  document.querySelectorAll(".todo-filter").forEach(btn=>btn.onclick=()=>{todoFilter=btn.dataset.filter;renderTodoView();});
-  document.querySelectorAll(".todo-check").forEach(input=>input.onchange=()=>{
-    const todo=state.todos.find(item=>item.id===input.dataset.id);if(!todo)return;todo.done=input.checked;save();renderTodoView();
+  document.querySelectorAll(".todo-filter").forEach(btn=>btn.onclick=()=>{todoFilter=btn.dataset.filter;todoShouldScrollLatest=true;renderTodoView();});
+  document.querySelectorAll(".toggle-todo-date").forEach(btn=>btn.onclick=()=>{
+    rememberBoardScroll();
+    if(expandedTodoDates.has(btn.dataset.date)) expandedTodoDates.delete(btn.dataset.date); else expandedTodoDates.add(btn.dataset.date);
+    renderTodoView();
   });
-  document.querySelectorAll(".edit-todo").forEach(btn=>btn.onclick=()=>{const todo=state.todos.find(item=>item.id===btn.dataset.id);if(todo)openTodoDialog(todo);});
+  document.querySelectorAll(".todo-check").forEach(input=>input.onchange=()=>{
+    rememberBoardScroll();const todo=state.todos.find(item=>item.id===input.dataset.id);if(!todo)return;todo.done=input.checked;save();renderTodoView();
+  });
+  document.querySelectorAll(".edit-todo").forEach(btn=>btn.onclick=()=>{rememberBoardScroll();const todo=state.todos.find(item=>item.id===btn.dataset.id);if(todo)openTodoDialog(todo);});
   document.querySelectorAll(".delete-todo").forEach(btn=>btn.onclick=()=>{
     const todo=state.todos.find(item=>item.id===btn.dataset.id);if(!todo||!confirm(`Delete “${todo.title}”?`))return;
-    state.todos=state.todos.filter(item=>item.id!==todo.id);save();renderTodoView();
+    rememberBoardScroll();state.todos=state.todos.filter(item=>item.id!==todo.id);save();renderTodoView();
   });
 }
 
 function getProgressNodes(){
-  return TAB_ORDER.filter(t=>t.key!=="progress").map((tab,idx)=>{
+  return TAB_ORDER.filter(t=>t.key!=="progress" && t.key!=="todo").map((tab,idx)=>{
     let progress;
-    if(tab.key==="todo") progress = getTodoProgress();
-    else if(tab.key==="dsa") progress = getDsaProgress();
+    if(tab.key==="dsa") progress = getDsaProgress();
     else if(tab.key==="amazon") progress = getAmazonProgress();
     else if(tab.key==="systemdesign") progress = getSystemDesignProgress();
     else if(tab.key==="applications") progress = getApplicationsProgress();
@@ -5509,15 +5584,6 @@ function getProgressNodes(){
 let openTreeNodes = {};
 
 function progressChildren(key){
-  if(key === "todo"){
-    const today = todayStr();
-    const buckets = [
-      {label:"Today", items:state.todos.filter(todo=>todo.date===today)},
-      {label:"Upcoming", items:state.todos.filter(todo=>todo.date>today)},
-      {label:"Overdue", items:state.todos.filter(todo=>todo.date<today && !todo.done)}
-    ];
-    return buckets.map(bucket=>({label:bucket.label,done:bucket.items.filter(todo=>todo.done).length,total:bucket.items.length}));
-  }
   if(key === "dsa"){
     return getDsaCategoryKeys().map(cat=>{
       const qs = getDsaQuestionItems(cat);
@@ -5922,7 +5988,7 @@ function bindTreeInteractions(nodes){
 
 function renderView(key){
   if(key==="progress") renderProgressTreeView();
-  else if(key==="todo") renderTodoView();
+  else if(key==="todo"){todoShouldScrollLatest=true;renderTodoView();}
   else if(key==="dsa") renderDSAView();
   else if(key==="amazon") renderAmazonView();
   else if(key==="systemdesign") renderSystemDesignView();
