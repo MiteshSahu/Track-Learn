@@ -259,6 +259,55 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .modal-help{color:var(--muted);font-size:.78rem;line-height:1.45;margin:-4px 0 12px;}
 .view-desc{color:var(--muted);font-size:.9rem;margin-bottom:22px;}
 
+/* ===== To Do ===== */
+.todo-hero{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.7fr);gap:16px;margin-bottom:18px;}
+.todo-today,.todo-summary{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:20px;}
+.todo-today{background:linear-gradient(135deg,var(--accent2),#285d38);color:#fff;position:relative;overflow:hidden;}
+.todo-today:after{content:"✓";position:absolute;right:18px;bottom:-32px;font-size:9rem;font-weight:900;color:rgba(255,255,255,.07);line-height:1;}
+.todo-eyebrow{font-size:.72rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:7px;}
+.todo-date-title{font-family:var(--serif);font-size:1.55rem;font-weight:850;margin-bottom:5px;}
+.todo-today p{font-size:.86rem;opacity:.78;}
+.todo-progress-line{height:8px;border-radius:99px;background:rgba(255,255,255,.18);overflow:hidden;margin-top:18px;}
+.todo-progress-line span{display:block;height:100%;width:var(--pct);background:#7ee29b;border-radius:inherit;transition:width .3s ease;}
+.todo-progress-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.75rem;font-weight:800;margin-top:8px;}
+.todo-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.todo-summary-item{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.todo-summary-item b{display:block;font-family:var(--mono);font-size:1.35rem;color:var(--accent);}
+.todo-summary-item span{font-size:.72rem;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em;}
+.todo-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px;}
+.todo-filters{display:flex;gap:7px;flex-wrap:wrap;}
+.todo-filter{border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:999px;padding:8px 13px;font-size:.76rem;font-weight:850;cursor:pointer;}
+.todo-filter.active,.todo-filter:hover{background:var(--accent-soft);border-color:#9bd7a9;color:var(--accent);}
+.todo-date-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;align-items:start;}
+.todo-date-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;}
+.todo-date-card.is-today{border-color:#7bc38d;box-shadow:0 0 0 2px rgba(32,130,75,.09),var(--shadow);}
+.todo-card-head{display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid var(--border);background:var(--panel2);}
+.todo-calendar{width:46px;height:48px;border-radius:10px;background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+.todo-calendar small{font-size:.6rem;font-weight:900;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;}
+.todo-calendar b{font-family:var(--mono);font-size:1.15rem;line-height:1.1;}
+.todo-card-title{min-width:0;flex:1;}
+.todo-card-title h3{font-family:var(--serif);font-size:1rem;font-weight:850;}
+.todo-card-title p{font-size:.72rem;color:var(--muted);margin-top:2px;}
+.todo-card-count{font-family:var(--mono);font-size:.7rem;font-weight:900;color:var(--accent);}
+.todo-items{padding:7px;}
+.todo-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:9px;transition:background .15s ease;}
+.todo-item:hover{background:var(--panel2);}
+.todo-item input{width:18px;height:18px;margin-top:1px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.todo-item-main{min-width:0;flex:1;}
+.todo-item-title{font-size:.86rem;font-weight:750;line-height:1.4;overflow-wrap:anywhere;}
+.todo-item.done .todo-item-title{text-decoration:line-through;color:var(--muted);}
+.todo-item-meta{display:flex;gap:6px;align-items:center;margin-top:4px;}
+.todo-priority{font-size:.59rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:999px;}
+.todo-priority.high{background:#ffe8e8;color:#aa2929;}.todo-priority.medium{background:#fff4d8;color:#926000;}.todo-priority.low{background:#e7f8ed;color:#147333;}
+.todo-item-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s ease;}
+.todo-item:hover .todo-item-actions,.todo-item-actions:focus-within{opacity:1;}
+.todo-icon-btn{width:27px;height:27px;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:7px;cursor:pointer;font-weight:900;}
+.todo-icon-btn:hover{color:var(--accent);border-color:var(--accent);}.todo-icon-btn.delete:hover{color:var(--danger);border-color:var(--danger);}
+.todo-empty{grid-column:1/-1;text-align:center;background:var(--panel);border:1px dashed var(--border);border-radius:14px;padding:46px 20px;color:var(--muted);}
+.todo-empty b{display:block;color:var(--text);font-family:var(--serif);font-size:1.1rem;margin-bottom:5px;}
+.todo-form-label{display:flex;flex-direction:column;gap:5px;flex:1;font-size:.7rem;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+@media (max-width:760px){.todo-hero{grid-template-columns:1fr}.todo-date-grid{grid-template-columns:1fr}.todo-item-actions{opacity:1;}}
+
 /* ===== Generic Topic Tab (Core Java, Spring, etc.) ===== */
 .progress-overview{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -1864,6 +1913,7 @@ function createDefaultState(){
     companyStatus: {},
     customCompanies: [],
     personalQA: [],
+    todos: [],
     userSubjects: {},
     edits: {
       topicLabels: {},
@@ -1923,8 +1973,15 @@ function migrateState(s){
   Object.keys(defaults.edits).forEach(key=>{
     if(!s.edits[key] || typeof s.edits[key] !== "object" || Array.isArray(s.edits[key])) s.edits[key] = {};
   });
-  ["customCompanies","personalQA","customSdItems"].forEach(key=>{
+  ["customCompanies","personalQA","customSdItems","todos"].forEach(key=>{
     if(!Array.isArray(s[key])) s[key] = [];
+  });
+  s.todos.forEach((todo, idx)=>{
+    if(!todo.id) todo.id = makeCustomId(todo.title || `todo-${idx + 1}`);
+    todo.title = String(todo.title || "Untitled task");
+    todo.date = /^\d{4}-\d{2}-\d{2}$/.test(todo.date || "") ? todo.date : todayStr();
+    todo.priority = ["low","medium","high"].includes(todo.priority) ? todo.priority : "medium";
+    todo.done = !!todo.done;
   });
   s.customSdItems.forEach((item, idx)=>{
     if(!item.id) item.id = makeCustomId(item.name || `system-design-item-${idx + 1}`);
@@ -2368,6 +2425,7 @@ function normalizeStoredNotes(s){
 
 const TAB_ORDER = [
   {key:"progress", label:"Progress Tree"},
+  {key:"todo", label:"To Do"},
   {key:"dsa", label:"DSA"},
   {key:"amazon", label:"Amazon Top Questions"},
   {key:"teradata", label:"Teradata Prep"},
@@ -5280,10 +5338,160 @@ function getApplicationsProgress(){
   return {done, total, pct: total ? Math.round((done/total)*100) : 0};
 }
 
+/* ========================= TO DO ========================= */
+
+let todoFilter = "all";
+
+function todoDate(value){
+  const [year,month,day] = String(value || todayStr()).split("-").map(Number);
+  return new Date(year, (month || 1) - 1, day || 1, 12);
+}
+
+function todoDateLabel(dateValue){
+  const today = todayStr();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowKey = dateKey(tomorrow);
+  if(dateValue === today) return "Today";
+  if(dateValue === tomorrowKey) return "Tomorrow";
+  if(dateValue < today) return "Overdue";
+  return todoDate(dateValue).toLocaleDateString(undefined,{weekday:"long"});
+}
+
+function getTodoProgress(){
+  const total = state.todos.length;
+  const done = state.todos.filter(todo=>todo.done).length;
+  return {done,total,pct:total ? Math.round(done/total*100) : 0};
+}
+
+function renderTodoView(){
+  const main = document.getElementById("mainArea");
+  const today = todayStr();
+  const todayItems = state.todos.filter(todo=>todo.date === today);
+  const todayDone = todayItems.filter(todo=>todo.done).length;
+  const todayPct = todayItems.length ? Math.round(todayDone/todayItems.length*100) : 0;
+  const pending = state.todos.filter(todo=>!todo.done).length;
+  const overdue = state.todos.filter(todo=>!todo.done && todo.date < today).length;
+  const upcoming = state.todos.filter(todo=>!todo.done && todo.date > today).length;
+
+  let visible = [...state.todos];
+  if(todoFilter === "today") visible = visible.filter(todo=>todo.date === today);
+  else if(todoFilter === "upcoming") visible = visible.filter(todo=>!todo.done && todo.date > today);
+  else if(todoFilter === "completed") visible = visible.filter(todo=>todo.done);
+  else if(todoFilter === "overdue") visible = visible.filter(todo=>!todo.done && todo.date < today);
+  visible.sort((a,b)=>a.date.localeCompare(b.date) || Number(a.done)-Number(b.done) || ({high:0,medium:1,low:2}[a.priority]-{high:0,medium:1,low:2}[b.priority]));
+
+  const grouped = visible.reduce((groups,todo)=>{
+    (groups[todo.date] ||= []).push(todo);
+    return groups;
+  },{});
+  const dateCards = Object.entries(grouped).map(([date,todos])=>{
+    const parsed = todoDate(date);
+    const done = todos.filter(todo=>todo.done).length;
+    return `<section class="todo-date-card ${date===today?"is-today":""}">
+      <div class="todo-card-head">
+        <div class="todo-calendar"><small>${parsed.toLocaleDateString(undefined,{month:"short"})}</small><b>${parsed.getDate()}</b></div>
+        <div class="todo-card-title"><h3>${todoDateLabel(date)}</h3><p>${parsed.toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})}</p></div>
+        <span class="todo-card-count">${done}/${todos.length}</span>
+      </div>
+      <div class="todo-items">
+        ${todos.map(todo=>`<div class="todo-item ${todo.done?"done":""}">
+          <input type="checkbox" class="todo-check" data-id="${escapeAttr(todo.id)}" ${todo.done?"checked":""} aria-label="Complete ${escapeAttr(todo.title)}">
+          <div class="todo-item-main">
+            <div class="todo-item-title">${escapeHTML(todo.title)}</div>
+            <div class="todo-item-meta"><span class="todo-priority ${todo.priority}">${todo.priority}</span></div>
+          </div>
+          <div class="todo-item-actions">
+            <button class="todo-icon-btn edit-todo" data-id="${escapeAttr(todo.id)}" title="Edit task" aria-label="Edit task">✎</button>
+            <button class="todo-icon-btn delete delete-todo" data-id="${escapeAttr(todo.id)}" title="Delete task" aria-label="Delete task">×</button>
+          </div>
+        </div>`).join("")}
+      </div>
+    </section>`;
+  }).join("");
+
+  const now = new Date();
+  main.innerHTML = `<div class="view active">
+    <div class="view-header">
+      <div><h2 class="view-title">To Do</h2><div class="view-desc">Plan each day, finish the important work, and keep your preparation moving.</div></div>
+      <div class="view-header-actions"><button class="modal-trigger-btn" id="openTodoModal">+ Add task</button></div>
+    </div>
+    <div class="todo-hero">
+      <section class="todo-today">
+        <div class="todo-eyebrow">Today's checklist</div>
+        <div class="todo-date-title">${now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</div>
+        <p>${todayItems.length ? `${Math.max(0,todayItems.length-todayDone)} task${todayItems.length-todayDone===1?"":"s"} left for today` : "Your day is clear — add a task when you are ready."}</p>
+        <div class="todo-progress-line" style="--pct:${todayPct}%"><span></span></div>
+        <div class="todo-progress-meta"><span>${todayDone} completed</span><span>${todayPct}%</span></div>
+      </section>
+      <section class="todo-summary">
+        <div class="todo-summary-item"><b>${pending}</b><span>Pending</span></div>
+        <div class="todo-summary-item"><b>${todayItems.length}</b><span>Today</span></div>
+        <div class="todo-summary-item"><b>${upcoming}</b><span>Upcoming</span></div>
+        <div class="todo-summary-item"><b>${overdue}</b><span>Overdue</span></div>
+      </section>
+    </div>
+    <div class="todo-toolbar">
+      <div class="todo-filters">
+        ${[["all","All"],["today","Today"],["upcoming","Upcoming"],["overdue","Overdue"],["completed","Completed"]].map(([key,label])=>`<button class="todo-filter ${todoFilter===key?"active":""}" data-filter="${key}">${label}</button>`).join("")}
+      </div>
+    </div>
+    <div class="todo-date-grid">${dateCards || `<div class="todo-empty"><b>No tasks here</b><span>Add a task or choose another filter.</span></div>`}</div>
+  </div>`;
+  bindTodoControls();
+}
+
+function openTodoDialog(todo=null){
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay open";
+  overlay.innerHTML = `<div class="modal-box">
+    <button class="modal-close" type="button" title="Close">×</button>
+    <h3>${todo?"Edit task":"Add a task"}</h3>
+    <p class="modal-help">Choose the day and priority so your checklist stays focused.</p>
+    <div class="modal-fields">
+      <label class="todo-form-label wide">Task<input class="wide" id="todoTitle" type="text" maxlength="180" placeholder="What needs to be done?" value="${escapeAttr(todo?.title || "")}"></label>
+      <label class="todo-form-label">Date<input id="todoDate" type="date" value="${escapeAttr(todo?.date || todayStr())}"></label>
+      <label class="todo-form-label">Priority<select id="todoPriority"><option value="high" ${todo?.priority==="high"?"selected":""}>High</option><option value="medium" ${!todo || todo.priority==="medium"?"selected":""}>Medium</option><option value="low" ${todo?.priority==="low"?"selected":""}>Low</option></select></label>
+    </div>
+    <div class="modal-actions"><button class="btn secondary" id="cancelTodo">Cancel</button><button class="btn" id="saveTodo">${todo?"Save changes":"Add task"}</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+  const close = ()=>overlay.remove();
+  overlay.querySelector(".modal-close").onclick = close;
+  overlay.querySelector("#cancelTodo").onclick = close;
+  overlay.onclick = event=>{if(event.target===overlay) close();};
+  const submit = ()=>{
+    const title = overlay.querySelector("#todoTitle").value.trim();
+    const date = overlay.querySelector("#todoDate").value;
+    if(!title){overlay.querySelector("#todoTitle").focus();return;}
+    if(!date){overlay.querySelector("#todoDate").focus();return;}
+    if(todo){todo.title=title;todo.date=date;todo.priority=overlay.querySelector("#todoPriority").value;}
+    else state.todos.push({id:makeCustomId(title),title,date,priority:overlay.querySelector("#todoPriority").value,done:false});
+    save();close();renderTodoView();
+  };
+  overlay.querySelector("#saveTodo").onclick = submit;
+  overlay.querySelector("#todoTitle").onkeydown = event=>{if(event.key==="Enter") submit();};
+  setTimeout(()=>overlay.querySelector("#todoTitle").focus(),0);
+}
+
+function bindTodoControls(){
+  document.getElementById("openTodoModal").onclick = ()=>openTodoDialog();
+  document.querySelectorAll(".todo-filter").forEach(btn=>btn.onclick=()=>{todoFilter=btn.dataset.filter;renderTodoView();});
+  document.querySelectorAll(".todo-check").forEach(input=>input.onchange=()=>{
+    const todo=state.todos.find(item=>item.id===input.dataset.id);if(!todo)return;todo.done=input.checked;save();renderTodoView();
+  });
+  document.querySelectorAll(".edit-todo").forEach(btn=>btn.onclick=()=>{const todo=state.todos.find(item=>item.id===btn.dataset.id);if(todo)openTodoDialog(todo);});
+  document.querySelectorAll(".delete-todo").forEach(btn=>btn.onclick=()=>{
+    const todo=state.todos.find(item=>item.id===btn.dataset.id);if(!todo||!confirm(`Delete “${todo.title}”?`))return;
+    state.todos=state.todos.filter(item=>item.id!==todo.id);save();renderTodoView();
+  });
+}
+
 function getProgressNodes(){
   return TAB_ORDER.filter(t=>t.key!=="progress").map((tab,idx)=>{
     let progress;
-    if(tab.key==="dsa") progress = getDsaProgress();
+    if(tab.key==="todo") progress = getTodoProgress();
+    else if(tab.key==="dsa") progress = getDsaProgress();
     else if(tab.key==="amazon") progress = getAmazonProgress();
     else if(tab.key==="systemdesign") progress = getSystemDesignProgress();
     else if(tab.key==="applications") progress = getApplicationsProgress();
@@ -5301,6 +5509,15 @@ function getProgressNodes(){
 let openTreeNodes = {};
 
 function progressChildren(key){
+  if(key === "todo"){
+    const today = todayStr();
+    const buckets = [
+      {label:"Today", items:state.todos.filter(todo=>todo.date===today)},
+      {label:"Upcoming", items:state.todos.filter(todo=>todo.date>today)},
+      {label:"Overdue", items:state.todos.filter(todo=>todo.date<today && !todo.done)}
+    ];
+    return buckets.map(bucket=>({label:bucket.label,done:bucket.items.filter(todo=>todo.done).length,total:bucket.items.length}));
+  }
   if(key === "dsa"){
     return getDsaCategoryKeys().map(cat=>{
       const qs = getDsaQuestionItems(cat);
@@ -5705,6 +5922,7 @@ function bindTreeInteractions(nodes){
 
 function renderView(key){
   if(key==="progress") renderProgressTreeView();
+  else if(key==="todo") renderTodoView();
   else if(key==="dsa") renderDSAView();
   else if(key==="amazon") renderAmazonView();
   else if(key==="systemdesign") renderSystemDesignView();
