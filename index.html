@@ -448,6 +448,10 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .note-edit-surface:empty::before{content:attr(data-placeholder);color:#8a968d;pointer-events:none;}
 .note-edit-surface ul{margin:4px 0;padding-left:22px;}
 .note-edit-surface li{margin:2px 0;}
+.note-edit-surface ul.note-checklist{list-style:none;padding-left:2px;display:flex;flex-direction:column;gap:5px;}
+.note-edit-surface ul.note-checklist li{display:flex;align-items:flex-start;gap:8px;margin:0;padding:4px 6px;border-radius:6px;}
+.note-edit-surface ul.note-checklist li:has(input:checked){color:var(--muted);text-decoration:line-through;background:var(--panel2);}
+.note-edit-surface .note-check-input{width:17px;height:17px;min-width:17px;margin-top:2px;accent-color:var(--accent);cursor:pointer;}
 .note-edit-surface strong,.note-edit-surface b{font-weight:900;}
 .note-edit-surface mark,.personal-note-content mark{background:#fff1a8;color:inherit;border-radius:3px;padding:0 2px;}
 .note-expanded .note-edit-surface{min-height:52vh;}
@@ -1092,7 +1096,7 @@ html[data-theme="dark"] .activity-month .month-label{color:var(--muted);}
 .qa-form{background:linear-gradient(135deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:20px;box-shadow:var(--shadow);}
 .personal-compose-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;}.personal-compose-head h3{font-family:var(--serif);font-size:1.05rem;font-weight:850;}.personal-compose-head p{color:var(--muted);font-size:.76rem;margin-top:3px;}
 .qa-form .note-edit-surface{min-height:150px;background:var(--panel);font-family:var(--sans);font-size:.88rem;line-height:1.65;}
-.personal-compose-actions{display:flex;justify-content:flex-end;margin-top:10px;}
+.personal-compose-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
 .qa-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;align-items:start;}
 .qa-item{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;transition:border-color .15s ease,box-shadow .15s ease;}
 .qa-item:hover{border-color:#a9d8b5;box-shadow:0 12px 32px rgba(37,91,49,.12);}
@@ -3279,13 +3283,29 @@ const NOTE_RICH_PREFIX = "__TRACK_LEARN_RICH__:";
 function sanitizeNoteHTML(html){
   const template = document.createElement("template");
   template.innerHTML = String(html || "");
-  const allowed = new Set(["B","STRONG","MARK","UL","OL","LI","DIV","P","BR"]);
+  const allowed = new Set(["B","STRONG","MARK","UL","OL","LI","DIV","P","BR","INPUT"]);
   [...template.content.querySelectorAll("*")].forEach(element=>{
     if(!allowed.has(element.tagName)){
       element.replaceWith(...element.childNodes);
       return;
     }
-    [...element.attributes].forEach(attr=>element.removeAttribute(attr.name));
+    if(element.tagName === "INPUT"){
+      if(element.getAttribute("type") !== "checkbox"){
+        element.remove();
+        return;
+      }
+      const checked=element.checked || element.hasAttribute("checked");
+      [...element.attributes].forEach(attr=>element.removeAttribute(attr.name));
+      element.setAttribute("type","checkbox");
+      element.setAttribute("class","note-check-input");
+      element.setAttribute("contenteditable","false");
+      if(checked) element.setAttribute("checked","");
+    } else if(element.tagName === "UL" && element.classList.contains("note-checklist")){
+      [...element.attributes].forEach(attr=>element.removeAttribute(attr.name));
+      element.className="note-checklist";
+    } else {
+      [...element.attributes].forEach(attr=>element.removeAttribute(attr.name));
+    }
   });
   return template.innerHTML;
 }
@@ -3330,6 +3350,7 @@ function noteEditorHTML(id, body, placeholder){
         <button type="button" class="note-format-btn" data-action="bold" data-target="${id}" title="Bold selected text" aria-label="Bold selected text">B</button>
         <button type="button" class="note-format-btn note-highlight-btn" data-action="highlight" data-target="${id}" title="Highlight selected text" aria-label="Highlight selected text">H</button>
         <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
+        <button type="button" class="note-format-btn" data-action="checklist" data-target="${id}" title="Turn selected lines into a checklist" aria-label="Turn selected lines into a checklist">☑</button>
       </div>
       <div id="${id}" class="note-edit-surface" contenteditable="true" draggable="false" role="textbox" aria-multiline="true" data-placeholder="${escapeAttr(placeholder)}">${noteBodyToHTML(body)}</div>
     </div>`;
@@ -3356,11 +3377,39 @@ function bindNoteFormatting(){
             selection.addRange(after);
           }
         }
+      } else if(btn.dataset.action === "checklist"){
+        const selection=window.getSelection();
+        let node=selection?.anchorNode;
+        if(node?.nodeType===Node.TEXT_NODE) node=node.parentElement;
+        let list=node?.closest?.("ul");
+        if(!list || !editor.contains(list)){
+          document.execCommand("insertUnorderedList",false,null);
+          node=selection?.anchorNode;
+          if(node?.nodeType===Node.TEXT_NODE) node=node.parentElement;
+          list=node?.closest?.("ul");
+        }
+        if(list && editor.contains(list)){
+          list.classList.add("note-checklist");
+          list.querySelectorAll(":scope > li").forEach(item=>{
+            if(item.querySelector(":scope > input[type='checkbox']"))return;
+            const checkbox=document.createElement("input");
+            checkbox.type="checkbox";
+            checkbox.className="note-check-input";
+            checkbox.contentEditable="false";
+            item.prepend(checkbox);
+          });
+        }
       } else {
         document.execCommand("styleWithCSS", false, false);
         document.execCommand(btn.dataset.action === "bold" ? "bold" : "insertUnorderedList", false, null);
       }
       editor.dispatchEvent(new Event("input", {bubbles:true}));
+    };
+  });
+  document.querySelectorAll(".note-edit-surface input[type='checkbox']").forEach(checkbox=>{
+    checkbox.onchange=()=>{
+      if(checkbox.checked) checkbox.setAttribute("checked",""); else checkbox.removeAttribute("checked");
+      checkbox.closest(".note-edit-surface")?.dispatchEvent(new Event("input",{bubbles:true}));
     };
   });
 }
@@ -5240,6 +5289,7 @@ function bindApplicationsEditControls(){
 }
 
 let openPersonalNotes = {};
+let personalComposerOpen = false;
 
 function personalNotePlainText(body){
   const template=document.createElement("template");
@@ -5254,7 +5304,7 @@ function personalNoteTitle(qa){
 
 function renderPersonalView(){
   const main=document.getElementById("mainArea");
-  const ordered=applySavedOrder(state.personalQA.slice().reverse(),state.edits.personalOrder?.all,qa=>qa.id);
+  const ordered=state.personalQA.slice().sort((a,b)=>(b.ts || 0)-(a.ts || 0));
   const items=ordered.map(qa=>{
     const key=String(qa.id);
     const safe=key.replace(/[^a-zA-Z0-9_-]/g,"-");
@@ -5288,23 +5338,28 @@ function renderPersonalView(){
   main.innerHTML=`<div class="view active">
     <div class="view-header">
       <div><h2 class="view-title">Personal Interview Notes</h2><div class="view-desc">Keep every personal story, talking point, achievement, and final interview reminder in one editable place.</div></div>
+      <div class="view-header-actions"><button class="modal-trigger-btn" id="togglePersonalComposer">${personalComposerOpen?"Close editor":"+ Create note"}</button></div>
     </div>
     ${pageSearchHTML("personal","Search personal interview notes")}
-    <section class="qa-form">
-      <div class="personal-compose-head"><div><h3>Add a personal note</h3><p>Select text to make it bold or highlighted. Use bullets to organize multiple points.</p></div></div>
+    ${personalComposerOpen?`<section class="qa-form">
+      <div class="personal-compose-head"><div><h3>Add a personal note</h3><p>Select lines to make a checklist, or format important text with bold, highlight, and bullets.</p></div></div>
       ${noteEditorHTML("newPersonalNote","","Start writing — for example: introduction points, project impact, strengths, questions for the interviewer...")}
-      <div class="personal-compose-actions"><button class="btn" id="savePersonalQA">Save note</button></div>
-    </section>
-    <div class="qa-list">${items || `<div class="empty">No personal notes yet. Add your interview introduction, achievements, project stories, strengths, and questions for the interviewer above.</div>`}</div>
+      <div class="personal-compose-actions"><button class="btn secondary" id="cancelPersonalNote">Cancel</button><button class="btn" id="savePersonalQA">Save note</button></div>
+    </section>`:""}
+    <div class="qa-list">${items || `<div class="empty">No personal notes yet. Use Create note to add your interview introduction, achievements, project stories, strengths, and questions for the interviewer.</div>`}</div>
   </div>`;
 
-  document.getElementById("savePersonalQA").onclick=()=>{
-    const body=getNoteEditorBody("newPersonalNote");
-    const plain=personalNotePlainText(body);
-    if(!plain)return;
-    state.personalQA.push({id:makeCustomId(plain),q:plain.slice(0,90),a:"",body,ts:Date.now()});
-    save();renderPersonalView();
-  };
+  document.getElementById("togglePersonalComposer").onclick=()=>{personalComposerOpen=!personalComposerOpen;renderPersonalView();};
+  if(personalComposerOpen){
+    document.getElementById("cancelPersonalNote").onclick=()=>{personalComposerOpen=false;renderPersonalView();};
+    document.getElementById("savePersonalQA").onclick=()=>{
+      const body=getNoteEditorBody("newPersonalNote");
+      const plain=personalNotePlainText(body);
+      if(!plain)return;
+      state.personalQA.push({id:makeCustomId(plain),q:plain.slice(0,90),a:"",body,ts:Date.now()});
+      personalComposerOpen=false;save();renderPersonalView();
+    };
+  }
   const toggle=id=>{openPersonalNotes[id]=!openPersonalNotes[id];renderPreservingScroll(renderPersonalView);};
   document.querySelectorAll(".personal-note-head").forEach(head=>head.onclick=event=>{if(event.target.closest("button"))return;toggle(head.dataset.id);});
   document.querySelectorAll(".personal-expand").forEach(btn=>btn.onclick=()=>toggle(btn.dataset.id));
@@ -5319,7 +5374,6 @@ function renderPersonalView(){
     state.personalQA=state.personalQA.filter(item=>String(item.id)!==btn.dataset.id);delete openPersonalNotes[btn.dataset.id];save();renderPersonalView();
   });
   bindPageSearch("personal",state.personalQA.map(qa=>({label:personalNoteTitle(qa),id:`qa-${qa.id}`,open:()=>{openPersonalNotes[qa.id]=true;renderPersonalView();}})));
-  bindDragReorder(".qa-list",":scope > .qa-item",order=>{state.edits.personalOrder.all=order;save();},":scope > .personal-note-head");
   autoResizeTextareas();
 }
 
