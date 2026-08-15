@@ -448,6 +448,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .note-edit-surface:focus{border-color:#82c592;box-shadow:inset 3px 0 0 var(--accent),0 0 0 2px rgba(61,139,82,.1);background:color-mix(in srgb,#fff 97%,var(--accent-soft));}
 .note-edit-surface:empty::before{content:attr(data-placeholder);color:#8a968d;pointer-events:none;}
 .note-edit-surface ul{margin:4px 0;padding-left:22px;}
+.note-edit-surface p,.note-edit-surface div{margin:0;}
 .note-edit-surface li{margin:2px 0;}
 .note-edit-surface ul.note-checklist{list-style:none;padding-left:2px;display:flex;flex-direction:column;gap:5px;}
 .note-edit-surface ul.note-checklist li{display:flex;align-items:flex-start;gap:8px;margin:0;padding:4px 6px;border-radius:6px;}
@@ -3397,15 +3398,38 @@ function bindNoteFormatting(){
         if(selection && selection.rangeCount && !selection.isCollapsed){
           const range=selection.getRangeAt(0);
           if(editor.contains(range.commonAncestorContainer)){
-            const intersects=node=>{try{return range.intersectsNode(node);}catch{return false;}};
-            [...editor.querySelectorAll("div,p")]
-              .filter(block=>intersects(block) && !block.textContent.trim() && !block.querySelector("input"))
-              .forEach(block=>block.remove());
-            [...editor.querySelectorAll("br")].filter(intersects).forEach(br=>{
-              if(!br.isConnected)return;
-              let previous=br.previousSibling;
-              while(previous?.nodeType===Node.TEXT_NODE && !previous.textContent.trim()) previous=previous.previousSibling;
-              if(previous?.nodeName==="BR") br.remove();
+            const topLevel=node=>{
+              while(node && node.parentNode!==editor)node=node.parentNode;
+              return node;
+            };
+            const children=[...editor.childNodes];
+            const startNode=topLevel(range.startContainer);
+            const endNode=topLevel(range.endContainer);
+            const startIndex=Math.max(0,children.indexOf(startNode));
+            const endIndex=Math.max(startIndex,children.indexOf(endNode));
+            const selectedRoots=children.slice(startIndex,endIndex+1);
+            selectedRoots.forEach(root=>{
+              if(root.nodeType===Node.TEXT_NODE){
+                if(!root.textContent.trim())root.remove();
+                return;
+              }
+              if(root.nodeName==="BR"){
+                root.remove();
+                return;
+              }
+              if(root.matches?.("div,p") && !root.textContent.trim() && !root.querySelector("input")){
+                root.remove();
+                return;
+              }
+              [...root.querySelectorAll("div,p")]
+                .filter(block=>!block.textContent.trim() && !block.querySelector("input"))
+                .reverse().forEach(block=>block.remove());
+              [...root.querySelectorAll("br")].forEach(br=>{
+                if(!br.isConnected)return;
+                let previous=br.previousSibling;
+                while(previous?.nodeType===Node.TEXT_NODE && !previous.textContent.trim())previous=previous.previousSibling;
+                if(previous?.nodeName==="BR")br.remove();
+              });
             });
             editor.normalize();
             selection.removeAllRanges();
