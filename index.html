@@ -3373,13 +3373,22 @@ function bindNoteFormatting(){
         if(selection && selection.rangeCount && !selection.isCollapsed){
           const range = selection.getRangeAt(0);
           if(editor.contains(range.commonAncestorContainer)){
-            const mark = document.createElement("mark");
-            mark.appendChild(range.extractContents());
-            range.insertNode(mark);
-            selection.removeAllRanges();
-            const after = document.createRange();
-            after.selectNodeContents(mark);
-            selection.addRange(after);
+            const highlighted=[...editor.querySelectorAll("mark")].filter(mark=>{
+              try{return range.intersectsNode(mark);}catch{return false;}
+            });
+            if(highlighted.length){
+              selection.removeAllRanges();
+              highlighted.reverse().forEach(mark=>mark.replaceWith(...mark.childNodes));
+              editor.normalize();
+            } else {
+              const mark = document.createElement("mark");
+              mark.appendChild(range.extractContents());
+              range.insertNode(mark);
+              selection.removeAllRanges();
+              const after = document.createRange();
+              after.selectNodeContents(mark);
+              selection.addRange(after);
+            }
           }
         }
       } else if(btn.dataset.action === "checklist"){
