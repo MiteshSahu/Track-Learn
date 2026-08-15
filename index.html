@@ -429,6 +429,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
   display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f3f7f4;
   border:1px solid var(--border);border-bottom:0;border-radius:8px 8px 0 0;
 }
+.note-editor-toolbar.bottom{border-top:0;border-bottom:1px solid var(--border);border-radius:0 0 8px 8px;justify-content:flex-end;}
 .note-format-btn{
   width:32px;height:30px;display:inline-flex;align-items:center;justify-content:center;
   border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);
@@ -438,13 +439,13 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .note-highlight-btn{background:#fff5b8;border-color:#eadc73;color:#745d00;}
 .note-edit-surface{
   width:100%;min-height:100px;background:#fff;border:1px solid var(--border);
-  color:var(--text);border-radius:0 0 8px 8px;padding:10px 12px;font-size:.82rem;
+  color:var(--text);caret-color:var(--accent);border-radius:0;padding:10px 12px;font-size:.82rem;
   font-family:var(--mono);line-height:1.5;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;
-  cursor:text;
+  cursor:text;user-select:text;-webkit-user-select:text;
 }
 .note-editor{cursor:default;}
 .note-editor-toolbar,.note-format-btn{cursor:pointer;}
-.note-edit-surface:focus{border-color:#82c592;box-shadow:0 0 0 2px rgba(61,139,82,.1);}
+.note-edit-surface:focus{border-color:#82c592;box-shadow:inset 3px 0 0 var(--accent),0 0 0 2px rgba(61,139,82,.1);background:color-mix(in srgb,#fff 97%,var(--accent-soft));}
 .note-edit-surface:empty::before{content:attr(data-placeholder);color:#8a968d;pointer-events:none;}
 .note-edit-surface ul{margin:4px 0;padding-left:22px;}
 .note-edit-surface li{margin:2px 0;}
@@ -3343,16 +3344,20 @@ function getNoteEditorBody(id){
   return editor.textContent.trim() ? `${NOTE_RICH_PREFIX}${html}` : "";
 }
 
+function noteEditorToolbarHTML(id,position="top"){
+  return `<div class="note-editor-toolbar ${position}">
+    <button type="button" class="note-format-btn" data-action="bold" data-target="${id}" title="Bold selected text" aria-label="Bold selected text">B</button>
+    <button type="button" class="note-format-btn note-highlight-btn" data-action="highlight" data-target="${id}" title="Highlight selected text" aria-label="Highlight selected text">H</button>
+    <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
+    <button type="button" class="note-format-btn" data-action="checklist" data-target="${id}" title="Turn selected lines into a checklist" aria-label="Turn selected lines into a checklist">☑</button>
+  </div>`;
+}
+
 function noteEditorHTML(id, body, placeholder){
-  return `
-    <div class="note-editor">
-      <div class="note-editor-toolbar">
-        <button type="button" class="note-format-btn" data-action="bold" data-target="${id}" title="Bold selected text" aria-label="Bold selected text">B</button>
-        <button type="button" class="note-format-btn note-highlight-btn" data-action="highlight" data-target="${id}" title="Highlight selected text" aria-label="Highlight selected text">H</button>
-        <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
-        <button type="button" class="note-format-btn" data-action="checklist" data-target="${id}" title="Turn selected lines into a checklist" aria-label="Turn selected lines into a checklist">☑</button>
-      </div>
-      <div id="${id}" class="note-edit-surface" contenteditable="true" draggable="false" role="textbox" aria-multiline="true" data-placeholder="${escapeAttr(placeholder)}">${noteBodyToHTML(body)}</div>
+  return `<div class="note-editor">
+      ${noteEditorToolbarHTML(id,"top")}
+      <div id="${id}" class="note-edit-surface" contenteditable="true" draggable="false" spellcheck="true" tabindex="0" role="textbox" aria-multiline="true" data-placeholder="${escapeAttr(placeholder)}">${noteBodyToHTML(body)}</div>
+      ${noteEditorToolbarHTML(id,"bottom")}
     </div>`;
 }
 
