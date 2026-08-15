@@ -3350,6 +3350,7 @@ function noteEditorToolbarHTML(id,position="top"){
     <button type="button" class="note-format-btn note-highlight-btn" data-action="highlight" data-target="${id}" title="Highlight selected text" aria-label="Highlight selected text">H</button>
     <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
     <button type="button" class="note-format-btn" data-action="checklist" data-target="${id}" title="Turn selected lines into a checklist" aria-label="Turn selected lines into a checklist">☑</button>
+    <button type="button" class="note-format-btn" data-action="compact" data-target="${id}" title="Remove blank lines from selected text" aria-label="Remove blank lines from selected text">⇵</button>
   </div>`;
 }
 
@@ -3389,6 +3390,26 @@ function bindNoteFormatting(){
               after.selectNodeContents(mark);
               selection.addRange(after);
             }
+          }
+        }
+      } else if(btn.dataset.action === "compact"){
+        const selection=window.getSelection();
+        if(selection && selection.rangeCount && !selection.isCollapsed){
+          const range=selection.getRangeAt(0);
+          if(editor.contains(range.commonAncestorContainer)){
+            const intersects=node=>{try{return range.intersectsNode(node);}catch{return false;}};
+            [...editor.querySelectorAll("div,p")]
+              .filter(block=>intersects(block) && !block.textContent.trim() && !block.querySelector("input"))
+              .forEach(block=>block.remove());
+            [...editor.querySelectorAll("br")].filter(intersects).forEach(br=>{
+              if(!br.isConnected)return;
+              let previous=br.previousSibling;
+              while(previous?.nodeType===Node.TEXT_NODE && !previous.textContent.trim()) previous=previous.previousSibling;
+              if(previous?.nodeName==="BR") br.remove();
+            });
+            editor.normalize();
+            selection.removeAllRanges();
+            editor.focus();
           }
         }
       } else if(btn.dataset.action === "checklist"){
