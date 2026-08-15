@@ -435,6 +435,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
   font-size:.82rem;font-weight:900;cursor:pointer;
 }
 .note-format-btn:hover{background:var(--accent-soft);border-color:#9bd7a9;color:var(--accent);}
+.note-highlight-btn{background:#fff5b8;border-color:#eadc73;color:#745d00;}
 .note-edit-surface{
   width:100%;min-height:100px;background:#fff;border:1px solid var(--border);
   color:var(--text);border-radius:0 0 8px 8px;padding:10px 12px;font-size:.82rem;
@@ -448,6 +449,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .note-edit-surface ul{margin:4px 0;padding-left:22px;}
 .note-edit-surface li{margin:2px 0;}
 .note-edit-surface strong,.note-edit-surface b{font-weight:900;}
+.note-edit-surface mark,.personal-note-content mark{background:#fff1a8;color:inherit;border-radius:3px;padding:0 2px;}
 .note-expanded .note-edit-surface{min-height:52vh;}
 .topic-workspace{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start;}
 @media (max-width:1050px){.topic-workspace{grid-template-columns:1fr;}}
@@ -1087,27 +1089,19 @@ html[data-theme="dark"] .activity-month .month-label{color:var(--muted);}
 }
 
 /* Personal Tab */
-.qa-form{
-  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-  padding:18px;margin-bottom:20px;display:flex;flex-direction:column;gap:10px;
-  box-shadow:var(--shadow);
-}
-.qa-form input, .qa-form textarea{
-  width:100%;background:var(--panel2);border:1px solid var(--border);
-  color:var(--text);border-radius:8px;padding:10px 12px;font-size:.88rem;font-family:var(--sans);
-}
-.qa-form textarea{min-height:100px;resize:vertical;font-family:var(--mono);font-size:.82rem;}
-.qa-list{display:flex;flex-direction:column;gap:12px;}
-.qa-item{
-  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;
-  box-shadow:var(--shadow);
-}
+.qa-form{background:linear-gradient(135deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:20px;box-shadow:var(--shadow);}
+.personal-compose-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;}.personal-compose-head h3{font-family:var(--serif);font-size:1.05rem;font-weight:850;}.personal-compose-head p{color:var(--muted);font-size:.76rem;margin-top:3px;}
+.qa-form .note-edit-surface{min-height:150px;background:var(--panel);font-family:var(--sans);font-size:.88rem;line-height:1.65;}
+.personal-compose-actions{display:flex;justify-content:flex-end;margin-top:10px;}
+.qa-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;align-items:start;}
+.qa-item{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;transition:border-color .15s ease,box-shadow .15s ease;}
+.qa-item:hover{border-color:#a9d8b5;box-shadow:0 12px 32px rgba(37,91,49,.12);}
 .qa-item.dragging{opacity:.45;}
-.qa-item .q{font-weight:700;font-family:var(--serif);font-size:1rem;margin-bottom:8px;color:var(--accent2);}
+.qa-item .q{font-weight:800;font-family:var(--serif);font-size:.95rem;color:var(--text);}
 .qa-item .q[data-drag-handle="true"]{cursor:grab;}
 .qa-item .q[data-drag-handle="true"]:active{cursor:grabbing;}
-.qa-item .a{font-family:var(--mono);font-size:.82rem;white-space:pre-wrap;line-height:1.6;color:var(--text);}
-.qa-item .meta{display:flex;justify-content:flex-end;margin-top:10px;}
+.personal-note-head{display:flex;align-items:flex-start;gap:12px;padding:15px 16px;cursor:pointer;}.personal-note-heading{min-width:0;flex:1;}.personal-note-preview{font-size:.75rem;color:var(--muted);line-height:1.45;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}.personal-note-date{font-family:var(--mono);font-size:.64rem;color:var(--muted);margin-top:7px;}.personal-note-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}.personal-note-icon{width:31px;height:31px;border:1px solid var(--border);border-radius:8px;background:var(--panel2);color:var(--accent);font-weight:900;cursor:pointer;}.personal-note-icon:hover{border-color:var(--accent);background:var(--accent-soft);}.personal-note-icon.delete{color:var(--danger);}.personal-note-icon.delete:hover{border-color:var(--danger);background:#fff0f0;}.personal-note-panel{display:none;border-top:1px solid var(--border);padding:14px 16px 16px;background:var(--panel2);}.qa-item.open{grid-column:1/-1;}.qa-item.open .personal-note-panel{display:block;}.qa-item.open .personal-expand{transform:rotate(180deg);}.personal-note-panel .note-edit-surface{min-height:240px;background:var(--panel);font-family:var(--sans);font-size:.88rem;line-height:1.65;}.personal-note-panel-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+@media (max-width:700px){.qa-list{grid-template-columns:1fr}.personal-note-actions{gap:4px}.personal-note-head{padding:13px}.qa-item.open{grid-column:auto;}}
 
 footer{text-align:center;color:var(--muted);font-size:.75rem;padding:30px 0;}
 </style>
@@ -2015,6 +2009,8 @@ function migrateState(s){
   });
   s.personalQA.forEach((qa, idx)=>{
     if(!qa.id) qa.id = makeCustomId(qa.q || `personal-question-${idx + 1}`);
+    if(!qa.body) qa.body = qa.a ? `**${qa.q || "Personal note"}**\n${qa.a}` : String(qa.q || "");
+    if(!qa.ts) qa.ts = Date.now();
   });
   s.customCompanies.forEach((company, idx)=>{
     if(!company.id) company.id = makeCustomId(company.name || `company-${idx + 1}`);
@@ -3127,8 +3123,8 @@ function autoResizeTextareas(){
 }
 
 function markNearestSaveButtonDirty(input){
-  const panel = input.closest(".q-note-panel,.topic-note-panel,.resource-note-panel");
-  const btn = panel?.querySelector(".save-q-note,.save-topic-note,.save-sd-note");
+  const panel = input.closest(".q-note-panel,.topic-note-panel,.resource-note-panel,.personal-note-panel");
+  const btn = panel?.querySelector(".save-q-note,.save-topic-note,.save-sd-note,.save-personal-note");
   if(btn) btn.classList.add("unsaved");
 }
 
@@ -3283,7 +3279,7 @@ const NOTE_RICH_PREFIX = "__TRACK_LEARN_RICH__:";
 function sanitizeNoteHTML(html){
   const template = document.createElement("template");
   template.innerHTML = String(html || "");
-  const allowed = new Set(["B","STRONG","UL","OL","LI","DIV","P","BR"]);
+  const allowed = new Set(["B","STRONG","MARK","UL","OL","LI","DIV","P","BR"]);
   [...template.content.querySelectorAll("*")].forEach(element=>{
     if(!allowed.has(element.tagName)){
       element.replaceWith(...element.childNodes);
@@ -3332,6 +3328,7 @@ function noteEditorHTML(id, body, placeholder){
     <div class="note-editor">
       <div class="note-editor-toolbar">
         <button type="button" class="note-format-btn" data-action="bold" data-target="${id}" title="Bold selected text" aria-label="Bold selected text">B</button>
+        <button type="button" class="note-format-btn note-highlight-btn" data-action="highlight" data-target="${id}" title="Highlight selected text" aria-label="Highlight selected text">H</button>
         <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
       </div>
       <div id="${id}" class="note-edit-surface" contenteditable="true" draggable="false" role="textbox" aria-multiline="true" data-placeholder="${escapeAttr(placeholder)}">${noteBodyToHTML(body)}</div>
@@ -3345,8 +3342,24 @@ function bindNoteFormatting(){
       const editor = document.getElementById(btn.dataset.target);
       if(!editor) return;
       editor.focus();
-      document.execCommand("styleWithCSS", false, false);
-      document.execCommand(btn.dataset.action === "bold" ? "bold" : "insertUnorderedList", false, null);
+      if(btn.dataset.action === "highlight"){
+        const selection = window.getSelection();
+        if(selection && selection.rangeCount && !selection.isCollapsed){
+          const range = selection.getRangeAt(0);
+          if(editor.contains(range.commonAncestorContainer)){
+            const mark = document.createElement("mark");
+            mark.appendChild(range.extractContents());
+            range.insertNode(mark);
+            selection.removeAllRanges();
+            const after = document.createRange();
+            after.selectNodeContents(mark);
+            selection.addRange(after);
+          }
+        }
+      } else {
+        document.execCommand("styleWithCSS", false, false);
+        document.execCommand(btn.dataset.action === "bold" ? "bold" : "insertUnorderedList", false, null);
+      }
       editor.dispatchEvent(new Event("input", {bubbles:true}));
     };
   });
@@ -5226,82 +5239,88 @@ function bindApplicationsEditControls(){
   });
 }
 
-function renderPersonalView(){
-  const main = document.getElementById("mainArea");
+let openPersonalNotes = {};
 
-  const orderedPersonalQA = applySavedOrder(state.personalQA.slice().reverse(), state.edits.personalOrder?.all, qa=>qa.id);
-  const items = orderedPersonalQA.map((qa, revIdx)=>{
-    const date = new Date(qa.ts).toLocaleDateString();
-    return `
-    <div class="qa-item" id="qa-${qa.id}">
-      <div class="q">Q: ${escapeHTML(qa.q)}</div>
-      <div class="a">${escapeHTML(qa.a)}</div>
-      <div class="meta">
-        <span style="color:var(--muted);font-size:.75rem;margin-right:auto;">${date}</span>
-        ${editMode ? `<button class="btn small secondary edit-qa" data-id="${escapeAttr(qa.id)}">Edit</button><button class="btn danger" data-id="${escapeAttr(qa.id)}" id="del-qa-${qa.id}">Delete</button>` : ""}
+function personalNotePlainText(body){
+  const template=document.createElement("template");
+  template.innerHTML=noteBodyToHTML(body);
+  return (template.content.textContent || "").replace(/\s+/g," ").trim();
+}
+
+function personalNoteTitle(qa){
+  const plain=personalNotePlainText(qa.body || qa.a || qa.q || "");
+  return String(qa.q || plain || "Personal interview note").trim().slice(0,90);
+}
+
+function renderPersonalView(){
+  const main=document.getElementById("mainArea");
+  const ordered=applySavedOrder(state.personalQA.slice().reverse(),state.edits.personalOrder?.all,qa=>qa.id);
+  const items=ordered.map(qa=>{
+    const key=String(qa.id);
+    const safe=key.replace(/[^a-zA-Z0-9_-]/g,"-");
+    const body=qa.body || (qa.a ? `**${qa.q || "Personal note"}**\n${qa.a}` : qa.q || "");
+    const plain=personalNotePlainText(body);
+    const title=personalNoteTitle({...qa,body});
+    const isOpen=!!openPersonalNotes[key];
+    const date=new Date(qa.ts || Date.now()).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+    return `<article class="qa-item ${isOpen?"open":""}" id="qa-${escapeAttr(key)}" data-order-key="${escapeAttr(key)}">
+      <div class="personal-note-head" data-id="${escapeAttr(key)}">
+        <div class="personal-note-heading">
+          <div class="q">${escapeHTML(title)}</div>
+          <div class="personal-note-preview">${escapeHTML(plain || "Empty note")}</div>
+          <div class="personal-note-date">Updated ${date}</div>
+        </div>
+        <div class="personal-note-actions">
+          <button class="personal-note-icon personal-expand" data-id="${escapeAttr(key)}" title="${isOpen?"Collapse":"Expand and edit"}" aria-label="${isOpen?"Collapse":"Expand and edit"}">⌄</button>
+          <button class="personal-note-icon delete delete-personal-note" data-id="${escapeAttr(key)}" title="Delete note" aria-label="Delete note">×</button>
+        </div>
       </div>
-    </div>`;
+      <div class="personal-note-panel">
+        ${noteEditorHTML(`personalnotebody-${safe}`,body,"Add your interview points, examples, reminders, and talking points...")}
+        <div class="personal-note-panel-actions">
+          <button class="btn small secondary collapse-personal-note" data-id="${escapeAttr(key)}">Collapse</button>
+          <button class="btn small save-personal-note" data-id="${escapeAttr(key)}" data-editor-id="personalnotebody-${safe}">Save note</button>
+        </div>
+      </div>
+    </article>`;
   }).join("");
 
-  main.innerHTML = `
-  <div class="view active">
+  main.innerHTML=`<div class="view active">
     <div class="view-header">
-      <div>
-        <h2 class="view-title">Personal Q&amp;A Bank</h2>
-        <div class="view-desc">Behavioral & "tell me about yourself" style questions — write your own answer once, revise anytime.</div>
-      </div>
-      <div class="view-header-actions">${editModeButtonHTML()}</div>
+      <div><h2 class="view-title">Personal Interview Notes</h2><div class="view-desc">Keep every personal story, talking point, achievement, and final interview reminder in one editable place.</div></div>
     </div>
-    ${pageSearchHTML("personal", "Search personal Q&A")}
+    ${pageSearchHTML("personal","Search personal interview notes")}
+    <section class="qa-form">
+      <div class="personal-compose-head"><div><h3>Add a personal note</h3><p>Select text to make it bold or highlighted. Use bullets to organize multiple points.</p></div></div>
+      ${noteEditorHTML("newPersonalNote","","Start writing — for example: introduction points, project impact, strengths, questions for the interviewer...")}
+      <div class="personal-compose-actions"><button class="btn" id="savePersonalQA">Save note</button></div>
+    </section>
+    <div class="qa-list">${items || `<div class="empty">No personal notes yet. Add your interview introduction, achievements, project stories, strengths, and questions for the interviewer above.</div>`}</div>
+  </div>`;
 
-    <div class="qa-form">
-      <input type="text" id="personalQ" placeholder="e.g. Tell me about yourself" />
-      <textarea id="personalA" placeholder="Write your answer here..."></textarea>
-      <button class="btn" id="savePersonalQA" style="align-self:flex-start;">Save Answer</button>
-    </div>
-
-    <div class="qa-list">
-      ${items || `<div class="empty">No saved answers yet. Add your first one above — e.g. "Tell me about yourself", "Why do you want to leave your current company?", "Describe a challenging project".</div>`}
-    </div>
-  </div>
-  `;
-
-  document.getElementById("savePersonalQA").onclick = ()=>{
-    const q = document.getElementById("personalQ").value.trim();
-    const a = document.getElementById("personalA").value.trim();
-    if(!q || !a) return;
-    state.personalQA.push({id:makeCustomId(q), q, a, ts: Date.now()});
-    save();
-    renderPersonalView();
+  document.getElementById("savePersonalQA").onclick=()=>{
+    const body=getNoteEditorBody("newPersonalNote");
+    const plain=personalNotePlainText(body);
+    if(!plain)return;
+    state.personalQA.push({id:makeCustomId(plain),q:plain.slice(0,90),a:"",body,ts:Date.now()});
+    save();renderPersonalView();
   };
-
-  document.querySelectorAll(".qa-item .danger").forEach(btn=>{
-    btn.onclick = ()=>{
-      state.personalQA = state.personalQA.filter(qa=>qa.id !== btn.dataset.id);
-      save();
-      renderPersonalView();
-    };
+  const toggle=id=>{openPersonalNotes[id]=!openPersonalNotes[id];renderPreservingScroll(renderPersonalView);};
+  document.querySelectorAll(".personal-note-head").forEach(head=>head.onclick=event=>{if(event.target.closest("button"))return;toggle(head.dataset.id);});
+  document.querySelectorAll(".personal-expand").forEach(btn=>btn.onclick=()=>toggle(btn.dataset.id));
+  document.querySelectorAll(".collapse-personal-note").forEach(btn=>btn.onclick=()=>{openPersonalNotes[btn.dataset.id]=false;renderPreservingScroll(renderPersonalView);});
+  document.querySelectorAll(".save-personal-note").forEach(btn=>btn.onclick=()=>{
+    const qa=state.personalQA.find(item=>String(item.id)===btn.dataset.id);if(!qa)return;
+    const body=getNoteEditorBody(btn.dataset.editorId);const plain=personalNotePlainText(body);if(!plain)return;
+    qa.body=body;qa.q=plain.slice(0,90);qa.a="";qa.ts=Date.now();save();clearSaveButtonDirty(btn);renderPreservingScroll(renderPersonalView);
   });
-  document.querySelectorAll(".edit-qa").forEach(btn=>{
-    btn.onclick = ()=>{
-      const qa = state.personalQA.find(item=>item.id === btn.dataset.id);
-      if(!qa) return;
-      const q = prompt("Edit question", qa.q);
-      if(!q || !q.trim()) return;
-      const a = prompt("Edit answer", qa.a);
-      if(a === null) return;
-      qa.q = q.trim();
-      qa.a = a.trim();
-      save();
-      renderPersonalView();
-    };
+  document.querySelectorAll(".delete-personal-note").forEach(btn=>btn.onclick=()=>{
+    const qa=state.personalQA.find(item=>String(item.id)===btn.dataset.id);if(!qa||!confirm(`Delete “${personalNoteTitle(qa)}”?`))return;
+    state.personalQA=state.personalQA.filter(item=>String(item.id)!==btn.dataset.id);delete openPersonalNotes[btn.dataset.id];save();renderPersonalView();
   });
-  bindEditModeToggle(renderPersonalView);
-  bindPageSearch("personal", state.personalQA.map(qa=>({label:qa.q, id:`qa-${qa.id}`, open:()=>{}})));
-  bindDragReorder(".qa-list", ":scope > .qa-item", order=>{
-    state.edits.personalOrder.all = order;
-    save();
-  }, ":scope > .q");
+  bindPageSearch("personal",state.personalQA.map(qa=>({label:personalNoteTitle(qa),id:`qa-${qa.id}`,open:()=>{openPersonalNotes[qa.id]=true;renderPersonalView();}})));
+  bindDragReorder(".qa-list",":scope > .qa-item",order=>{state.edits.personalOrder.all=order;save();},":scope > .personal-note-head");
+  autoResizeTextareas();
 }
 
 /* ========================= MASTER ROUTER ========================= */
