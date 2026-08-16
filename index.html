@@ -454,6 +454,11 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .note-edit-surface ul.note-checklist li{display:flex;align-items:flex-start;gap:8px;margin:0;padding:4px 6px;border-radius:6px;}
 .note-edit-surface ul.note-checklist li:has(input:checked){color:var(--muted);text-decoration:line-through;background:var(--panel2);}
 .note-edit-surface .note-check-input{width:17px;height:17px;min-width:17px;margin-top:2px;accent-color:var(--accent);cursor:pointer;}
+.note-edit-surface table{width:100%;border-collapse:collapse;table-layout:auto;margin:8px 0;background:var(--panel);font-family:var(--sans);font-size:.78rem;white-space:normal;}
+.note-edit-surface th,.note-edit-surface td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;min-width:110px;}
+.note-edit-surface th{background:var(--accent-soft);color:var(--accent2);font-weight:900;}
+.note-edit-surface tr:nth-child(even) td{background:var(--panel2);}
+.note-edit-surface code{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:2px 5px;font-family:var(--mono);font-size:.74rem;color:var(--accent2);}
 .note-edit-surface strong,.note-edit-surface b{font-weight:900;}
 .note-edit-surface mark,.personal-note-content mark{background:#fff1a8;color:inherit;border-radius:3px;padding:0 2px;}
 .note-expanded .note-edit-surface{min-height:52vh;}
@@ -3285,7 +3290,7 @@ const NOTE_RICH_PREFIX = "__TRACK_LEARN_RICH__:";
 function sanitizeNoteHTML(html){
   const template = document.createElement("template");
   template.innerHTML = String(html || "");
-  const allowed = new Set(["B","STRONG","MARK","UL","OL","LI","DIV","P","BR","INPUT"]);
+  const allowed = new Set(["B","STRONG","MARK","UL","OL","LI","DIV","P","BR","INPUT","TABLE","THEAD","TBODY","TR","TH","TD","CODE"]);
   [...template.content.querySelectorAll("*")].forEach(element=>{
     if(!allowed.has(element.tagName)){
       element.replaceWith(...element.childNodes);
@@ -3351,6 +3356,7 @@ function noteEditorToolbarHTML(id,position="top"){
     <button type="button" class="note-format-btn note-highlight-btn" data-action="highlight" data-target="${id}" title="Highlight selected text" aria-label="Highlight selected text">H</button>
     <button type="button" class="note-format-btn" data-action="bullet" data-target="${id}" title="Toggle bulleted list" aria-label="Toggle bulleted list">&#8226;</button>
     <button type="button" class="note-format-btn" data-action="checklist" data-target="${id}" title="Turn selected lines into a checklist" aria-label="Turn selected lines into a checklist">☑</button>
+    <button type="button" class="note-format-btn" data-action="table" data-target="${id}" title="Convert selected Markdown table" aria-label="Convert selected Markdown table">▦</button>
     <button type="button" class="note-format-btn" data-action="compact" data-target="${id}" title="Remove all blank lines from this note" aria-label="Remove all blank lines from this note">⇵</button>
   </div>`;
 }
@@ -3361,6 +3367,38 @@ function noteEditorHTML(id, body, placeholder){
       <div id="${id}" class="note-edit-surface" contenteditable="true" draggable="false" spellcheck="true" tabindex="0" role="textbox" aria-multiline="true" data-placeholder="${escapeAttr(placeholder)}">${noteBodyToHTML(body)}</div>
       ${noteEditorToolbarHTML(id,"bottom")}
     </div>`;
+}
+
+function noteTableCellContent(cell,value){
+  String(value || "").split(/(`[^`]+`)/g).filter(Boolean).forEach(part=>{
+    if(part.startsWith("`") && part.endsWith("`")){
+      const code=document.createElement("code");
+      code.textContent=part.slice(1,-1);
+      cell.appendChild(code);
+    } else cell.appendChild(document.createTextNode(part));
+  });
+}
+
+function markdownTextToNoteTable(text){
+  const rows=String(text || "").split(/\r?\n/).map(line=>line.trim()).filter(line=>line.includes("|"));
+  const parsed=rows.map(line=>line.replace(/^\|/,"").replace(/\|$/,"").split("|").map(cell=>cell.trim()));
+  if(parsed.length<2 || parsed[0].length<2)return null;
+  const isSeparator=row=>row.length && row.every(cell=>/^:?-{3,}:?$/.test(cell));
+  const header=parsed[0];
+  const bodyRows=parsed.slice(isSeparator(parsed[1])?2:1);
+  const table=document.createElement("table");
+  const thead=document.createElement("thead");
+  const headerRow=document.createElement("tr");
+  header.forEach(value=>{const th=document.createElement("th");noteTableCellContent(th,value);headerRow.appendChild(th);});
+  thead.appendChild(headerRow);table.appendChild(thead);
+  const tbody=document.createElement("tbody");
+  bodyRows.forEach(row=>{
+    const tr=document.createElement("tr");
+    header.forEach((_,idx)=>{const td=document.createElement("td");noteTableCellContent(td,row[idx] || "");tr.appendChild(td);});
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  return table;
 }
 
 function bindNoteFormatting(){
@@ -3391,6 +3429,23 @@ function bindNoteFormatting(){
               after.selectNodeContents(mark);
               selection.addRange(after);
             }
+          }
+        }
+      } else if(btn.dataset.action === "table"){
+        const selection=window.getSelection();
+        if(selection && selection.rangeCount && !selection.isCollapsed){
+          const range=selection.getRangeAt(0);
+          if(editor.contains(range.commonAncestorContainer)){
+            const table=markdownTextToNoteTable(selection.toString());
+            if(!table){alert("Select a Markdown pipe table with at least two columns, then try again.");return;}
+            const after=document.createElement("div");
+            after.appendChild(document.createElement("br"));
+            range.deleteContents();
+            range.insertNode(after);
+            range.insertNode(table);
+            selection.removeAllRanges();
+            const caret=document.createRange();
+            caret.setStart(after,0);caret.collapse(true);selection.addRange(caret);
           }
         }
       } else if(btn.dataset.action === "compact"){
