@@ -456,7 +456,7 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .note-edit-surface li{margin:2px 0;}
 .note-edit-surface ul.note-checklist{list-style:none;padding-left:2px;display:flex;flex-direction:column;gap:5px;}
 .note-edit-surface ul.note-checklist li{display:flex;align-items:flex-start;gap:8px;margin:0;padding:4px 6px;border-radius:6px;}
-.note-edit-surface ul.note-checklist li:has(input:checked){color:var(--muted);text-decoration:line-through;background:var(--panel2);}
+.note-edit-surface ul.note-checklist li:has(> input:checked){color:var(--muted);text-decoration:line-through;background:var(--panel2);}
 .note-edit-surface .note-check-input{width:17px;height:17px;min-width:17px;margin-top:2px;accent-color:var(--accent);cursor:pointer;}
 .note-edit-surface table{width:100%;border-collapse:collapse;table-layout:auto;margin:8px 0;background:var(--panel);font-family:var(--sans);font-size:.78rem;white-space:normal;}
 .note-edit-surface th,.note-edit-surface td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;min-width:110px;}
@@ -3582,6 +3582,40 @@ function sanitizeNoteHTML(html){
       [...element.attributes].forEach(attr=>element.removeAttribute(attr.name));
     }
   });
+  template.content.querySelectorAll("ul.note-checklist > li").forEach(item=>{
+    const checkbox=item.querySelector(":scope > input[type='checkbox']");
+    const groups=[];
+    let current=[];
+    const pushCurrent=()=>{
+      if(current.some(node=>String(node.textContent || "").trim() || node.nodeType===Node.ELEMENT_NODE)) groups.push(current);
+      current=[];
+    };
+    [...item.childNodes].filter(node=>node!==checkbox).forEach(node=>{
+      if(node.nodeType===Node.ELEMENT_NODE && node.tagName==="BR"){
+        pushCurrent();
+      } else if(node.nodeType===Node.ELEMENT_NODE && ["DIV","P"].includes(node.tagName)){
+        pushCurrent();
+        const children=[...node.childNodes];
+        if(children.length) groups.push(children);
+      } else {
+        current.push(node);
+      }
+    });
+    pushCurrent();
+    if(groups.length < 2) return;
+    const wasChecked=!!checkbox?.checked || !!checkbox?.hasAttribute("checked");
+    const replacements=groups.map((nodes,index)=>{
+      const nextItem=document.createElement("li");
+      const nextCheckbox=document.createElement("input");
+      nextCheckbox.type="checkbox";
+      nextCheckbox.className="note-check-input";
+      nextCheckbox.contentEditable="false";
+      if(index === 0 && wasChecked) nextCheckbox.setAttribute("checked","");
+      nextItem.append(nextCheckbox,...nodes);
+      return nextItem;
+    });
+    item.replaceWith(...replacements);
+  });
   return template.innerHTML;
 }
 
@@ -3747,25 +3781,53 @@ function bindNoteFormatting(){
         editor.focus();
       } else if(btn.dataset.action === "checklist"){
         const selection=window.getSelection();
-        let node=selection?.anchorNode;
-        if(node?.nodeType===Node.TEXT_NODE) node=node.parentElement;
-        let list=node?.closest?.("ul");
-        if(!list || !editor.contains(list)){
-          document.execCommand("insertUnorderedList",false,null);
-          node=selection?.anchorNode;
+        if(selection && selection.rangeCount && !selection.isCollapsed){
+          const range=selection.getRangeAt(0);
+          if(editor.contains(range.commonAncestorContainer)){
+            const lines=selection.toString().split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+            if(lines.length){
+              const list=document.createElement("ul");
+              list.className="note-checklist";
+              lines.forEach(line=>{
+                const item=document.createElement("li");
+                const checkbox=document.createElement("input");
+                checkbox.type="checkbox";
+                checkbox.className="note-check-input";
+                checkbox.contentEditable="false";
+                item.append(checkbox,document.createTextNode(line));
+                list.appendChild(item);
+              });
+              const after=document.createElement("div");
+              after.appendChild(document.createElement("br"));
+              range.deleteContents();
+              range.insertNode(after);
+              range.insertNode(list);
+              selection.removeAllRanges();
+              const caret=document.createRange();
+              caret.setStart(after,0);caret.collapse(true);selection.addRange(caret);
+            }
+          }
+        } else {
+          let node=selection?.anchorNode;
           if(node?.nodeType===Node.TEXT_NODE) node=node.parentElement;
-          list=node?.closest?.("ul");
-        }
-        if(list && editor.contains(list)){
-          list.classList.add("note-checklist");
-          list.querySelectorAll(":scope > li").forEach(item=>{
-            if(item.querySelector(":scope > input[type='checkbox']"))return;
-            const checkbox=document.createElement("input");
-            checkbox.type="checkbox";
-            checkbox.className="note-check-input";
-            checkbox.contentEditable="false";
-            item.prepend(checkbox);
-          });
+          let list=node?.closest?.("ul");
+          if(!list || !editor.contains(list)){
+            document.execCommand("insertUnorderedList",false,null);
+            node=selection?.anchorNode;
+            if(node?.nodeType===Node.TEXT_NODE) node=node.parentElement;
+            list=node?.closest?.("ul");
+          }
+          if(list && editor.contains(list)){
+            list.classList.add("note-checklist");
+            list.querySelectorAll(":scope > li").forEach(item=>{
+              if(item.querySelector(":scope > input[type='checkbox']"))return;
+              const checkbox=document.createElement("input");
+              checkbox.type="checkbox";
+              checkbox.className="note-check-input";
+              checkbox.contentEditable="false";
+              item.prepend(checkbox);
+            });
+          }
         }
       } else {
         document.execCommand("styleWithCSS", false, false);
