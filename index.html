@@ -2752,17 +2752,17 @@ function categorizedTopicHTML(topicKey, cards){
   const groups = TOPIC_CATEGORY_GROUPS[topicKey];
   if(!groups) return cards.map(c=>c.html).join("");
   const grouped = groups.map(group=>{
-    const groupCards = cards.filter(card=>group.indices.includes(card.idx));
+    const groupCards = cards.filter(card=>group.indices.includes(card.idx) || card.categoryId === group.id);
     const ordered = applySavedOrder(groupCards, state.edits.topicOrder?.[topicKey], card=>card.key);
     const html = ordered.map(card=>card.html).join("");
     return `
       <section class="category-section" id="${group.id}">
-        <h3 class="category-title">${group.label}<span>${group.indices.length} topics</span></h3>
+        <h3 class="category-title">${group.label}<span>${groupCards.length} topics</span></h3>
         ${html}
       </section>`;
   }).join("");
   const groupedIndices = new Set(groups.flatMap(g=>g.indices));
-  const uncategorizedCards = cards.filter(c=>!groupedIndices.has(c.idx));
+  const uncategorizedCards = cards.filter(c=>!groupedIndices.has(c.idx) && !c.categoryId);
   const uncategorized = applySavedOrder(uncategorizedCards, state.edits.topicOrder?.[topicKey], card=>card.key).map(c=>c.html).join("");
   return grouped + uncategorized;
 }
@@ -2922,7 +2922,7 @@ function renderTopicView(topicKey){
     const isOpen = !!openTopicNotePanels[noteKey];
     const linkOpen = !!(openTopicLinkInputs[noteKey] || item.link);
     const idSafe = noteKey.replaceAll("::","-");
-    return {key:noteKey, html:`
+    return {key:noteKey, categoryId:item.categoryId || "", html:`
     <div class="subtopic-card ${checked?"done":""}" id="topic-card-${idSafe}" data-order-key="${noteKey}">
       <div class="subtopic-row expandable-row" data-note-key="${noteKey}">
         <input type="checkbox" class="custom-topic-check" data-topic="${topicKey}" data-id="${escapeAttr(item.id)}" ${checked?"checked":""}>
@@ -3178,6 +3178,18 @@ function bindCustomTopicControls(topicKey){
         questions.forEach(question=>item.subtopics.push({id:makeCustomId(question), title:question, done:false}));
         state.customTopics[topicKey].push(item);
         openSubtopicForms[`${topicKey}::custom::${item.id}`] = false;
+      } else if(target.startsWith("__group__::")){
+        const categoryId = target.slice("__group__::".length);
+        const existing = new Set(state.customTopics[topicKey]
+          .filter(item=>item.categoryId === categoryId)
+          .map(item=>item.title.toLowerCase()));
+        questions.forEach(question=>{
+          if(existing.has(question.toLowerCase())) return;
+          state.customTopics[topicKey].push({
+            id:makeCustomId(question), title:question, done:false, note:"", link:"", subtopics:[], categoryId
+          });
+          existing.add(question.toLowerCase());
+        });
       } else if(target.includes("::custom::")){
         const item = findCustomTopic(topicKey, target.split("::custom::")[1]);
         if(!item) return;
@@ -3780,12 +3792,15 @@ function pageSearchHTML(pageKey, placeholder){
 }
 
 function addTopicControlHTML(topicKey, label){
-  const builtInOptions = (TOPICS[topicKey]?.subtopics || []).map(title=>{
-    const key = topicBuiltInKey(topicKey, title);
-    if(isHidden("topicHidden", key)) return "";
-    return `<option value="${escapeAttr(key)}">${escapeHTML(editedLabel("topicLabels", key, title))}</option>`;
-  }).join("");
-  const customOptions = (state.customTopics[topicKey] || []).map(item=>
+  const groups = TOPIC_CATEGORY_GROUPS[topicKey] || [];
+  const builtInOptions = groups.length
+    ? groups.map(group=>`<option value="${escapeAttr(`__group__::${group.id}`)}">${escapeHTML(group.label.replace(/^\d+\.\s*/, ""))}</option>`).join("")
+    : (TOPICS[topicKey]?.subtopics || []).map(title=>{
+      const key = topicBuiltInKey(topicKey, title);
+      if(isHidden("topicHidden", key)) return "";
+      return `<option value="${escapeAttr(key)}">${escapeHTML(editedLabel("topicLabels", key, title))}</option>`;
+    }).join("");
+  const customOptions = (state.customTopics[topicKey] || []).filter(item=>!item.categoryId).map(item=>
     `<option value="${escapeAttr(`${topicKey}::custom::${item.id}`)}">${escapeHTML(item.title)}</option>`
   ).join("");
   return `
