@@ -398,9 +398,13 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
   background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:12px;display:flex;gap:8px;flex-wrap:wrap;
 }
-.add-popover input,.add-popover select{min-width:0;flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:.84rem;}
+.add-popover input,.add-popover select,.add-popover textarea{min-width:0;flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:.84rem;color:var(--text);font-family:inherit;}
+.add-popover textarea{resize:vertical;min-height:92px;line-height:1.45;}
 .add-popover .wide{flex-basis:100%;}
 .add-popover .btn{white-space:nowrap;}
+.add-popover-label{flex-basis:100%;font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.add-popover-help{flex-basis:100%;font-size:.75rem;color:var(--muted);line-height:1.4;margin-top:-2px;}
+.new-topic-field[hidden]{display:none;}
 .topic-note-panel{
   display:none;border-top:1px solid var(--border);background:#f8f9fd;
   padding:14px 16px;
@@ -2963,7 +2967,7 @@ function renderTopicView(topicKey){
         <div class="view-desc">${topic.desc}</div>
       </div>
       <div class="view-header-actions">
-        ${topicKey === "designpatterns" ? editModeButtonHTML() : `${addTopicControlHTML(topicKey, topic.label)}${editModeButtonHTML()}`}
+        ${addTopicControlHTML(topicKey, topic.label)}${editModeButtonHTML()}
       </div>
     </div>
 
@@ -3154,14 +3158,57 @@ function bindCustomTopicControls(topicKey){
   const addBtn = document.getElementById(`addTopic-${topicKey}`);
   if(addBtn){
     addBtn.onclick = ()=>{
-      const input = document.getElementById(`newTopic-${topicKey}`);
-      const title = input.value.trim();
-      if(!title) return;
+      const target = document.getElementById(`questionTopic-${topicKey}`)?.value || "__new__";
+      const topicInput = document.getElementById(`newTopic-${topicKey}`);
+      const questionInput = document.getElementById(`newQuestions-${topicKey}`);
+      const title = topicInput?.value.trim() || "";
+      const questions = (questionInput?.value || "").split(/\n+/).map(value=>value.trim()).filter(Boolean);
+      if(!questions.length){
+        questionInput?.focus();
+        return;
+      }
       if(!state.customTopics[topicKey]) state.customTopics[topicKey] = [];
-      state.customTopics[topicKey].push({id:makeCustomId(title), title, done:false, note:"", link:"", subtopics:[]});
+
+      if(target === "__new__"){
+        if(!title){
+          topicInput?.focus();
+          return;
+        }
+        const item = {id:makeCustomId(title), title, done:false, note:"", link:"", subtopics:[]};
+        questions.forEach(question=>item.subtopics.push({id:makeCustomId(question), title:question, done:false}));
+        state.customTopics[topicKey].push(item);
+        openSubtopicForms[`${topicKey}::custom::${item.id}`] = false;
+      } else if(target.includes("::custom::")){
+        const item = findCustomTopic(topicKey, target.split("::custom::")[1]);
+        if(!item) return;
+        if(!Array.isArray(item.subtopics)) item.subtopics = [];
+        const existing = new Set(item.subtopics.map(question=>question.title.toLowerCase()));
+        questions.forEach(question=>{
+          if(!existing.has(question.toLowerCase())) item.subtopics.push({id:makeCustomId(question), title:question, done:false});
+        });
+        item.done = false;
+      } else {
+        if(!Array.isArray(state.topicChildren[target])) state.topicChildren[target] = [];
+        const existing = new Set(state.topicChildren[target].map(question=>question.title.toLowerCase()));
+        questions.forEach(question=>{
+          if(!existing.has(question.toLowerCase())) state.topicChildren[target].push({id:makeCustomId(question), title:question, done:false});
+        });
+        state.subtopicDone[topicKey][target] = false;
+      }
       save();
       renderTopicView(topicKey);
     };
+  }
+  const topicSelect = document.getElementById(`questionTopic-${topicKey}`);
+  const newTopicField = document.getElementById(`newTopic-${topicKey}`);
+  if(topicSelect && newTopicField){
+    const syncNewTopicField = ()=>{
+      const creating = topicSelect.value === "__new__";
+      newTopicField.hidden = !creating;
+      newTopicField.disabled = !creating;
+    };
+    topicSelect.onchange = syncNewTopicField;
+    syncNewTopicField();
   }
   document.querySelectorAll(".custom-topic-check").forEach(cb=>{
     cb.onchange = ()=>{
@@ -3733,12 +3780,29 @@ function pageSearchHTML(pageKey, placeholder){
 }
 
 function addTopicControlHTML(topicKey, label){
+  const builtInOptions = (TOPICS[topicKey]?.subtopics || []).map(title=>{
+    const key = topicBuiltInKey(topicKey, title);
+    if(isHidden("topicHidden", key)) return "";
+    return `<option value="${escapeAttr(key)}">${escapeHTML(editedLabel("topicLabels", key, title))}</option>`;
+  }).join("");
+  const customOptions = (state.customTopics[topicKey] || []).map(item=>
+    `<option value="${escapeAttr(`${topicKey}::custom::${item.id}`)}">${escapeHTML(item.title)}</option>`
+  ).join("");
   return `
     <details class="add-control">
-      <summary title="Create topic">Create</summary>
+      <summary title="Add interview questions">+ Questions</summary>
       <div class="add-popover">
-        <input type="text" id="newTopic-${topicKey}" placeholder="Add your own topic in ${escapeAttr(label)}">
-        <button class="btn small" id="addTopic-${topicKey}">Add Topic</button>
+        <label class="add-popover-label" for="questionTopic-${topicKey}">Add questions under</label>
+        <select class="wide" id="questionTopic-${topicKey}">
+          <option value="__new__">＋ Create a new topic</option>
+          ${builtInOptions}
+          ${customOptions}
+        </select>
+        <input class="wide new-topic-field" type="text" id="newTopic-${topicKey}" placeholder="New topic name in ${escapeAttr(label)}">
+        <label class="add-popover-label" for="newQuestions-${topicKey}">Questions</label>
+        <textarea class="wide" id="newQuestions-${topicKey}" placeholder="Enter one question per line"></textarea>
+        <div class="add-popover-help">Add one question or paste a list. Each non-empty line becomes a separate checklist item.</div>
+        <button class="btn small" id="addTopic-${topicKey}">Save Questions</button>
       </div>
     </details>`;
 }
