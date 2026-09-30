@@ -1163,7 +1163,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/n-queens/"
+      "url": "https://leetcode.com/problems/n-queens/",
+      "recentExperience": true
     },
     {
       "id": "lc-124",
@@ -1175,7 +1176,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/binary-tree-maximum-path-sum/"
+      "url": "https://leetcode.com/problems/binary-tree-maximum-path-sum/",
+      "recentExperience": true
     },
     {
       "id": "lc-212",
@@ -1187,7 +1189,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/word-search-ii/"
+      "url": "https://leetcode.com/problems/word-search-ii/",
+      "recentExperience": true
     },
     {
       "id": "lc-410",
@@ -1235,7 +1238,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/shortest-subarray-with-sum-at-least-k/"
+      "url": "https://leetcode.com/problems/shortest-subarray-with-sum-at-least-k/",
+      "recentExperience": true
     },
     {
       "id": "lc-2",
@@ -1295,7 +1299,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/course-schedule-ii/"
+      "url": "https://leetcode.com/problems/course-schedule-ii/",
+      "recentExperience": true
     },
     {
       "id": "lc-211",
@@ -1343,7 +1348,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/insert-delete-getrandom-o1/"
+      "url": "https://leetcode.com/problems/insert-delete-getrandom-o1/",
+      "recentExperience": true
     },
     {
       "id": "lc-981",
@@ -1355,7 +1361,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/time-based-key-value-store/"
+      "url": "https://leetcode.com/problems/time-based-key-value-store/",
+      "recentExperience": true
     },
     {
       "id": "lc-787",
@@ -1367,7 +1374,60 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/cheapest-flights-within-k-stops/"
+      "url": "https://leetcode.com/problems/cheapest-flights-within-k-stops/",
+      "recentExperience": true
+    },
+    {
+      "id": "lc-547",
+      "num": 547,
+      "title": "Number of Provinces",
+      "pattern": "Graph",
+      "category": "Graph",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/number-of-provinces/",
+      "recentExperience": true
+    },
+    {
+      "id": "lc-785",
+      "num": 785,
+      "title": "Is Graph Bipartite?",
+      "pattern": "Graph",
+      "category": "Graph",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/is-graph-bipartite/",
+      "recentExperience": true
+    },
+    {
+      "id": "lc-1235",
+      "num": 1235,
+      "title": "Maximum Profit in Job Scheduling",
+      "pattern": "DP",
+      "category": "DP",
+      "difficulty": "Hard",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/maximum-profit-in-job-scheduling/",
+      "recentExperience": true
+    },
+    {
+      "id": "lc-767",
+      "num": 767,
+      "title": "Reorganize String",
+      "pattern": "Heap",
+      "category": "Heap",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/reorganize-string/",
+      "recentExperience": true
     }
   ],
   "hld": [
@@ -1753,6 +1813,124 @@ window.AMAZON_PREP_DATA = {
       "State complexity",
       "Handle follow-ups",
       "Discuss trade-offs"
+    ]
+  },
+  "recentTopics": {
+    "patterns": [
+      {
+        "title": "Union Find",
+        "aliases": []
+      },
+      {
+        "title": "Dijkstra",
+        "aliases": []
+      },
+      {
+        "title": "Sweep Line",
+        "aliases": []
+      },
+      {
+        "title": "Pick/Not-Pick DP",
+        "aliases": []
+      },
+      {
+        "title": "0/1 Knapsack",
+        "aliases": []
+      },
+      {
+        "title": "Tree DP",
+        "aliases": []
+      }
+    ],
+    "hld": [
+      {
+        "title": "Google Docs",
+        "aliases": []
+      },
+      {
+        "title": "Job Scheduler",
+        "aliases": []
+      },
+      {
+        "title": "Document Processing",
+        "aliases": []
+      },
+      {
+        "title": "Recommendation System",
+        "aliases": []
+      },
+      {
+        "title": "Amazon Locker",
+        "aliases": []
+      }
+    ],
+    "lld": [
+      {
+        "title": "Ride Matching",
+        "aliases": []
+      },
+      {
+        "title": "Seat Booking",
+        "aliases": []
+      },
+      {
+        "title": "Meeting Room Booking",
+        "aliases": []
+      },
+      {
+        "title": "Bank App",
+        "aliases": []
+      },
+      {
+        "title": "Offline Download Manager",
+        "aliases": []
+      }
+    ],
+    "stories": [
+      {
+        "title": "Production failure",
+        "aliases": [
+          "Genuine technical failure"
+        ]
+      },
+      {
+        "title": "Tight deadline",
+        "aliases": [
+          "Tight deadline"
+        ]
+      },
+      {
+        "title": "Disagreement",
+        "aliases": [
+          "Technical disagreement"
+        ]
+      },
+      {
+        "title": "Ambiguity",
+        "aliases": []
+      },
+      {
+        "title": "Customer interaction",
+        "aliases": [
+          "Difficult stakeholder/customer situation"
+        ]
+      },
+      {
+        "title": "Changed-mind story",
+        "aliases": [
+          "Changed my technical opinion based on new evidence"
+        ]
+      }
+    ],
+    "genai": [
+      {
+        "title": "GenAI story 1",
+        "aliases": []
+      },
+      {
+        "title": "GenAI story 2",
+        "aliases": []
+      }
     ]
   }
 };

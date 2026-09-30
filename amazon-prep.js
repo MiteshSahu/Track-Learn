@@ -7,9 +7,11 @@ window.AmazonPrep = (() => {
   const projectStates = ['NOT_STARTED','PREPARED','PRACTICED','MOCKED','INTERVIEW_READY'];
   const foundationStates = ['NOT_STARTED','LEARNED','REVISED','CAN_EXPLAIN_IN_INTERVIEW'];
   const barStates = ['No Story','Story Drafted','Practiced','Deep-Dive Ready'];
-  const tabs = ['DSA','HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Final Revision'];
+  const tabs = ['DSA','HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Recent Experience','Final Revision'];
   const topTen = [146,200,207,297,236,239,3,560,253,295];
   const textFields = ['Approach Used','Pattern Recognition','Key Insight','Common Mistake','Edge Cases','Follow-up','Alternative Approach','Time Complexity','Space Complexity','Interview Explanation'];
+  let recentSection='DSA';
+  let practiceQuestion='';
   let tab = 'DSA', selected = '', filters = {}, dateSelected = '', timerHandle;
   const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const canonical = value => String(value || '').toLowerCase().replace(/^\d+[.\s]+/,'').replace(/[^a-z0-9]/g,'');
@@ -42,7 +44,7 @@ window.AmazonPrep = (() => {
   }
   function migrate(s) {
     const p=s.amazonPrep ||= {version:1};
-    for(const key of ['questions','hld','lld','stories','projects','mocks','foundations','bar','calendar','final','activity']) p[key] ||= {};
+    for(const key of ['questions','hld','lld','stories','projects','mocks','foundations','bar','calendar','final','activity','patterns','genai','practice']) p[key] ||= {};
     p.customQuestions ||= [];
     const items=legacyItems(s);
     for(const q of [...D.questions,...p.customQuestions]) {
@@ -59,6 +61,12 @@ window.AmazonPrep = (() => {
     }
     for(const [kind,names] of [['hld',D.hld],['lld',D.lld],['stories',D.stories],['projects',D.projects]]) names.forEach((title,i)=>{p[kind][i] ||= {title};});
     D.mocks.forEach((m,i)=>{p.mocks[i] ||= {...m};});
+    for(const [kind,entries] of Object.entries(D.recentTopics)) entries.forEach((entry,i)=>{
+      const names=[entry.title,...entry.aliases].map(canonical);
+      const existing=Object.values(p[kind]).find(r=>names.includes(canonical(r.title)));
+      const r=existing || (p[kind]['recent-'+i] ||= {title:entry.title});
+      r.recentExperience=true;
+    });
     for(let d=1;d<=30;d++) {
       const date='2026-10-'+String(d).padStart(2,'0');
       p.calendar[date] ||= {tasks:dailyPlan(d).map((title,i)=>({id:date+'-'+i,title,done:false})),Notes:'',carry:[]};
@@ -190,7 +198,7 @@ window.AmazonPrep = (() => {
     // Seed only into the existing persistence envelope. Safe to repeat after remote loads.
     persist(false);
     const main=document.getElementById('mainArea');
-    main.innerHTML=`<div class="view active ap" id="amazon-prep"><div class="view-header"><div><h2 class="view-title">Amazon SDE II Preparation</h2><div class="view-desc">30 October 2026 · ${Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())))} days remaining</div></div>${tab!=='Final Revision'?'<div class="view-header-actions"><button class="modal-trigger-btn" id="ap-create">+ Create</button></div>':''}</div><div class="ap-phase"><span id="ap-save-status" role="status" aria-live="polite"></span></div><section id="ap-remaining" class="ap-remaining" aria-label="Preparation remaining">${remainingSummaryHTML()}</section><nav class="ap-tabs dsa-cat-tabs" aria-label="Amazon preparation">${tabs.map(t=>`<button class="cat-btn ${t===tab?'active':''}" data-tab="${esc(t)}" aria-current="${t===tab?'page':'false'}">${esc(t)}</button>`).join('')}</nav><div id="ap-content"></div></div>`;
+    main.innerHTML=`<div class="view active ap" id="amazon-prep"><div class="view-header"><div><h2 class="view-title">Amazon SDE II Preparation</h2><div class="view-desc">30 October 2026 · ${Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())))} days remaining</div></div>${!['Final Revision','Recent Experience'].includes(tab)?'<div class="view-header-actions"><button class="modal-trigger-btn" id="ap-create">+ Create</button></div>':''}</div><div class="ap-phase"><span id="ap-save-status" role="status" aria-live="polite"></span></div><section id="ap-remaining" class="ap-remaining" aria-label="Preparation remaining">${remainingSummaryHTML()}</section><nav class="ap-tabs dsa-cat-tabs" aria-label="Amazon preparation">${tabs.map(t=>`<button class="cat-btn ${t===tab?'active':''}" data-tab="${esc(t)}" aria-current="${t===tab?'page':'false'}">${esc(t)}</button>`).join('')}</nav><div id="ap-content"></div></div>`;
     const root=document.getElementById('ap-content');
     const create=document.getElementById('ap-create');if(create)create.onclick=()=>createDialog();
     main.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.tab;selected='';render();});
@@ -202,6 +210,7 @@ window.AmazonPrep = (() => {
     if(tab==='Mocks') mocks(root);
     if(tab==='Calendar') calendar(root);
     if(tab==='Final Revision') finalRevision(root);
+    if(tab==='Recent Experience') recentView(root);
     bindQuestionRows(root);
     const activity=dsaActivityLog();
     renderHeatmap(activity,'apHeatmap');
@@ -213,7 +222,7 @@ window.AmazonPrep = (() => {
   function qRow(q) {
     const r=record(q);
     const hasNote=r.sources.some(src=>{const n=state[src.store+'Notes'][src.key];return n?.body || n?.solutions?.some(s=>s.code);});
-    return `<div class="q-card ap-q ${weights[r.status]>=35?'done':''} ${r.markRevision?'revisit':''}"><div class="q-row"><input type="checkbox" data-q-done="${esc(q.id)}" aria-label="Mark ${esc(q.title)} complete" ${weights[r.status]>=35?'checked':''}><button class="ap-question qname" data-open="${esc(q.id)}">${q.num?esc(q.num)+'. ':''}${esc(q.title)}</button><span class="ap-priority ap-priority-${q.priority.toLowerCase()}">${esc(q.priority)}</span><span class="diff-cycle ${q.difficulty.toLowerCase()}" title="${esc(q.difficulty)}" aria-label="${esc(q.difficulty)}">${q.difficulty[0]}</span><button class="revisit-toggle ${r.markRevision?'active':''}" data-revisit="${esc(q.id)}">${r.markRevision?'Revisit':'Mark revisit'}</button>${hasNote?'<span class="note-dot">Notes saved</span>':''}${safeURL(q.url)?`<a class="ytlink" href="${esc(q.url)}" target="_blank" rel="noopener noreferrer">LeetCode ↗</a>`:''}</div><div class="q-note-panel ap-inline-panel"></div></div>`;
+    return `<div class="q-card ap-q ${weights[r.status]>=35?'done':''} ${r.markRevision?'revisit':''}"><div class="q-row"><input type="checkbox" data-q-done="${esc(q.id)}" aria-label="Mark ${esc(q.title)} complete" ${weights[r.status]>=35?'checked':''}><button class="ap-question qname" data-open="${esc(q.id)}">${q.num?esc(q.num)+'. ':''}${esc(q.title)}</button><span class="ap-priority ap-priority-${q.priority.toLowerCase()}">${esc(q.priority)}</span><span class="diff-cycle ${q.difficulty.toLowerCase()}" title="${esc(q.difficulty)}" aria-label="${esc(q.difficulty)}">${q.difficulty[0]}</span><button class="revisit-toggle ${r.markRevision?'active':''}" data-revisit="${esc(q.id)}">${r.markRevision?'Revisit':'Mark revisit'}</button>${q.recentExperience?badge('Recent Experience'):''}${hasNote?'<span class="note-dot">Notes saved</span>':''}${safeURL(q.url)?`<a class="ytlink" href="${esc(q.url)}" target="_blank" rel="noopener noreferrer">LeetCode ↗</a>`:''}</div><div class="q-note-panel ap-inline-panel"></div></div>`;
   }
   function tasksHTML(date,limit=99) {
     const day=prep().calendar[date];if(!day) return '<p class="ap-muted">The plan runs from 1–30 October. Open Calendar to prepare ahead.</p>';
@@ -236,11 +245,11 @@ window.AmazonPrep = (() => {
   function filteredQuestions() {
     return questions().filter(q=>{
       const r=record(q);
-      return (!filters.search||`${q.title} ${q.num}`.toLowerCase().includes(filters.search.toLowerCase()))&&(!filters.pattern||q.pattern===filters.pattern)&&(!filters.difficulty||q.difficulty===filters.difficulty)&&(!filters.priority||q.priority===filters.priority)&&(!filters.status||r.status===filters.status)&&(!filters.confidence||String(r.confidence)===filters.confidence)&&(!filters.amazon||q.amazonTagged)&&(!filters.top||q.topPriority)&&(!filters.due||due(q));
+      return (!filters.recent||q.recentExperience)&&(!filters.search||`${q.title} ${q.num}`.toLowerCase().includes(filters.search.toLowerCase()))&&(!filters.pattern||q.pattern===filters.pattern)&&(!filters.difficulty||q.difficulty===filters.difficulty)&&(!filters.priority||q.priority===filters.priority)&&(!filters.status||r.status===filters.status)&&(!filters.confidence||String(r.confidence)===filters.confidence)&&(!filters.amazon||q.amazonTagged)&&(!filters.top||q.topPriority)&&(!filters.due||due(q));
     }).sort((a,b)=>priorities.indexOf(a.priority)-priorities.indexOf(b.priority)||a.pattern.localeCompare(b.pattern)||a.num-b.num);
   }
   function dsa(root) {
-    root.innerHTML=summaryHTML()+`<div class="ap-list-toolbar" id="ap-filters">${field('Search problems','search',filters.search)}${field('Priority','priority',filters.priority,'select',['',...priorities])}<details class="ap-filter-menu"><summary>Filters</summary><div class="ap-form">${[['pattern',[...new Set(questions().map(q=>q.pattern))]],['difficulty',['Easy','Medium','Hard']],['status',Object.keys(weights)],['confidence',[1,2,3,4,5]]].map(([key,values])=>field(key,key,filters[key],'select',['',...values])).join('')}${field('Amazon Tagged only','amazon',filters.amazon,'checkbox')}${field('Top Priority only','top',filters.top,'checkbox')}${field('Revision Due only','due',filters.due,'checkbox')}</div></details>${button('Reset filters','reset')}</div><div class="dsa-cat-tabs" id="ap-pattern-tabs">${['',...new Set(questions().map(q=>q.pattern))].map(pattern=>`<button class="cat-btn ${(!filters.pattern&&!pattern)||filters.pattern===pattern?'active':''}" data-pattern="${esc(pattern)}">${esc(pattern||'All')}</button>`).join('')}</div><div class="q-list" id="ap-results"></div>`;
+    root.innerHTML=summaryHTML()+`<div class="ap-list-toolbar" id="ap-filters">${field('Search problems','search',filters.search)}${field('Priority','priority',filters.priority,'select',['',...priorities])}<details class="ap-filter-menu"><summary>Filters</summary><div class="ap-form">${[['pattern',[...new Set(questions().map(q=>q.pattern))]],['difficulty',['Easy','Medium','Hard']],['status',Object.keys(weights)],['confidence',[1,2,3,4,5]]].map(([key,values])=>field(key,key,filters[key],'select',['',...values])).join('')}${field('Recent Experience only','recent',filters.recent,'checkbox')}${field('Amazon Tagged only','amazon',filters.amazon,'checkbox')}${field('Top Priority only','top',filters.top,'checkbox')}${field('Revision Due only','due',filters.due,'checkbox')}</div></details>${button('Reset filters','reset')}</div><div class="dsa-cat-tabs" id="ap-pattern-tabs">${['',...new Set(questions().map(q=>q.pattern))].map(pattern=>`<button class="cat-btn ${(!filters.pattern&&!pattern)||filters.pattern===pattern?'active':''}" data-pattern="${esc(pattern)}">${esc(pattern||'All')}</button>`).join('')}</div><div class="q-list" id="ap-results"></div>`;
     root.querySelectorAll('#ap-filters select').forEach(el=>{if(el.options[0].value==='')el.options[0].textContent='All '+el.dataset.field;});
     root.querySelectorAll('[data-pattern]').forEach(el=>el.onclick=()=>{filters.pattern=el.dataset.pattern;render();});
     const results=()=>{const qs=filteredQuestions();document.getElementById('ap-results').innerHTML=`<p class="ap-muted">${qs.length} of ${questions().length} questions</p>${qs.map((q,i)=>`${i===0||qs[i-1].pattern!==q.pattern||qs[i-1].priority!==q.priority?`<h3 class="dsa-section-title ap-pattern-title">${esc(q.pattern)}</h3>`:''}${qRow(q)}`).join('')||'<p>No matching questions.</p>'}`;bindQuestionRows(root);};results();
@@ -323,11 +332,11 @@ window.AmazonPrep = (() => {
     // Keep earlier detailed answers available in the single notes editor.
     return Object.entries(r).filter(([key,value])=>typeof value==='string'&&value.trim()&&!['title','Story Title','Status','Date','Round Type'].includes(key)).map(([key,value])=>key==='Notes'?value:key+': '+value).join('\n\n');
   }
-  function topicRows(root,kind) {
-    const records=prep()[kind],done=Object.values(records).filter(r=>topicDone(kind,r)).length;
-    root.innerHTML=`<div class="cat-progress">${done}/${Object.keys(records).length} completed</div><div class="q-list">${Object.entries(records).map(([id,r])=>`<div class="q-card ${topicDone(kind,r)?'done':''}" data-record="${esc(id)}"><div class="q-row"><input type="checkbox" data-topic-done="${esc(id)}" aria-label="Mark ${esc(r.title)} complete" ${topicDone(kind,r)?'checked':''}><button class="ap-question qname" data-topic-open="${esc(id)}">${esc(r['Story Title']||r.title)}</button>${r.Date?`<span class="date-done">${esc(r.Date)}</span>`:''}${topicNote(r)?'<span class="note-dot">Notes saved</span>':''}</div><div class="q-note-panel"></div></div>`).join('')}</div>`;
+  function topicRows(root,kind,recentOnly=false) {
+    const records=Object.fromEntries(Object.entries(prep()[kind]).filter(([,r])=>!recentOnly||r.recentExperience)),done=Object.values(records).filter(r=>topicDone(kind,r)).length;
+    root.innerHTML=`<div class="cat-progress">${done}/${Object.keys(records).length} completed</div><div class="q-list">${Object.entries(records).map(([id,r])=>`<div class="q-card ${topicDone(kind,r)?'done':''}" data-record="${esc(id)}"><div class="q-row"><input type="checkbox" data-topic-done="${esc(id)}" aria-label="Mark ${esc(r.title)} complete" ${topicDone(kind,r)?'checked':''}><button class="ap-question qname" data-topic-open="${esc(id)}">${esc(r['Story Title']||r.title)}</button>${r.recentExperience?badge('Recent Experience'):''}${r.Date?`<span class="date-done">${esc(r.Date)}</span>`:''}${topicNote(r)?'<span class="note-dot">Notes saved</span>':''}</div><div class="q-note-panel"></div></div>`).join('')}</div>`;
     root.querySelectorAll('.q-row').forEach(row=>row.onclick=e=>{if(!e.target.closest('input,button,a,select'))row.querySelector('[data-topic-open]').click();});
-    root.querySelectorAll('[data-topic-done]').forEach(el=>el.onchange=()=>{const r=records[el.dataset.topicDone];r.complete=el.checked;if(kind==='mocks')r.Completed=el.checked;persist();topicRows(root,kind);updateRemainingSummary();});
+    root.querySelectorAll('[data-topic-done]').forEach(el=>el.onchange=()=>{const r=records[el.dataset.topicDone];r.complete=el.checked;if(kind==='mocks')r.Completed=el.checked;persist();topicRows(root,kind,recentOnly);updateRemainingSummary();});
     root.querySelectorAll('[data-topic-open]').forEach(el=>el.onclick=()=>{
       const panel=el.closest('.q-card').querySelector('.q-note-panel'),open=panel.classList.contains('open');
       root.querySelectorAll('.q-note-panel').forEach(p=>{p.classList.remove('open');p.innerHTML='';});
@@ -340,6 +349,34 @@ window.AmazonPrep = (() => {
   function leadership(root) {topicRows(root,'stories');}
   function projects(root) {topicRows(root,'projects');}
   function mocks(root) {topicRows(root,'mocks');}
+  function recentView(root) {
+    const sections=['DSA','Patterns','HLD','LLD','Leadership','GenAI','Practice'];
+    root.innerHTML=`<p class="ap-muted">Recent Experience · your supplied preparation topics</p><div class="dsa-cat-tabs">${sections.map(t=>`<button class="cat-btn ${recentSection===t?'active':''}" data-recent-section="${t}">${t}</button>`).join('')}</div><div id="ap-recent-content"></div>`;
+    root.querySelectorAll('[data-recent-section]').forEach(el=>el.onclick=()=>{recentSection=el.dataset.recentSection;render();});
+    const content=root.querySelector('#ap-recent-content');
+    if(recentSection==='DSA')content.innerHTML=`<div class="cat-progress">12 questions · click a row for notes</div><div class="q-list">${questions().filter(q=>q.recentExperience).sort((a,b)=>a.pattern.localeCompare(b.pattern)).map(qRow).join('')}</div>`;
+    else if(recentSection==='Practice')practiceView(content);
+    else topicRows(content,{Patterns:'patterns',HLD:'hld',LLD:'lld',Leadership:'stories',GenAI:'genai'}[recentSection],true);
+  }
+  function practiceView(root) {
+    const qs=questions().filter(q=>q.recentExperience);
+    practiceQuestion ||= qs[0].id;
+    const q=qs.find(q=>q.id===practiceQuestion)||qs[0];
+    const r=prep().practice[q.id] ||= {minutes:q.difficulty==='Hard'?40:30,seconds:0,start:null,body:'',dryRun:false,followUp:false,finished:false};
+    root.innerHTML=`<section class="ap-card"><h3>Timed solve · no IDE</h3><p class="ap-muted">Plain text only. No autocomplete or execution. Pattern and previous notes stay hidden.</p><label class="ap-field">Question<select id="ap-practice-question">${qs.map(item=>`<option value="${item.id}" ${q.id===item.id?'selected':''}>${esc(item.title)}</option>`).join('')}</select></label><div class="ap-actions"><label>Minutes <input type="number" min="1" max="180" id="ap-practice-minutes" value="${r.minutes}"></label><output id="ap-practice-clock"></output>${button('Start','practice-start')}${button('Pause','practice-pause')}${button('Finish solve','practice-finish')}</div><label class="ap-field">Solution<textarea class="ap-code" id="ap-practice-body" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">${esc(r.body)}</textarea></label>${field('Dry run completed','dryRun',r.dryRun,'checkbox')}${field('Follow-up handled','followUp',r.followUp,'checkbox')}${field('Dry run / edge cases','dryNotes',r.dryNotes,'textarea')}${field('Follow-up / changed constraints','followNotes',r.followNotes,'textarea')}<div class="row-actions">${button('Save practice','practice-save')}</div><p id="ap-practice-status" role="status">${r.finished?'Solve finished.':''}</p></section>`;
+    const elapsed=()=>r.seconds+(r.start?(Date.now()-r.start)/1000:0);
+    const tick=()=>{const output=document.getElementById('ap-practice-clock');if(!output){clearInterval(timerHandle);return;}const seconds=Math.ceil(r.minutes*60-elapsed());output.textContent=(seconds<0?'Overtime +':'')+Math.floor(Math.abs(seconds)/60)+':'+String(Math.abs(seconds)%60).padStart(2,'0');};
+    const saveDraft=()=>{r.body=root.querySelector('#ap-practice-body').value;root.querySelectorAll('[data-field]').forEach(el=>r[el.dataset.field]=el.type==='checkbox'?el.checked:el.value);persist();};
+    root.querySelector('#ap-practice-question').onchange=e=>{saveDraft();r.seconds=elapsed();r.start=null;persist(false);practiceQuestion=e.target.value;render();};
+    root.querySelector('#ap-practice-body').oninput=saveDraft;
+    root.querySelectorAll('[data-field]').forEach(el=>el.onchange=saveDraft);
+    root.querySelector('#ap-practice-minutes').onchange=e=>{if(e.target.reportValidity()){r.minutes=+e.target.value;persist(false);tick();}};
+    root.querySelector('[data-action="practice-start"]').onclick=()=>{r.start ||= Date.now();r.finished=false;persist(false);tick();};
+    root.querySelector('[data-action="practice-pause"]').onclick=()=>{r.seconds=elapsed();r.start=null;saveDraft();tick();};
+    root.querySelector('[data-action="practice-finish"]').onclick=()=>{r.seconds=elapsed();r.start=null;r.finished=true;saveDraft();tick();root.querySelector('#ap-practice-status').textContent='Solve finished. Complete your dry run and follow-up notes.';};
+    root.querySelector('[data-action="practice-save"]').onclick=()=>{saveDraft();root.querySelector('#ap-practice-status').textContent='Practice saved.';};
+    tick();timerHandle=setInterval(tick,500);
+  }
   function calendar(root) {
     const p=prep();dateSelected ||= today()>='2026-10-01'&&today()<='2026-10-30'?today():'2026-10-01';
     const day=p.calendar[dateSelected],active=day.tasks.filter(t=>!t.carriedTo),done=active.filter(t=>t.done).length;

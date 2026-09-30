@@ -130,3 +130,16 @@ all JavaScript syntax and seed invariants. Authenticated live sync still depends
 the existing Supabase configuration and account session.
 
 The question bank also includes 20 additional pattern-grouped `GOOD_TO_DO` questions (114 seeded questions total). Select `GOOD_TO_DO` in the Priority filter to view them; existing priorities and saved progress remain unchanged.
+
+## Recent Experience
+
+The Recent Experience tab groups the user's supplied questions and topics: 12 tagged
+DSA questions, 6 patterns, 5 HLD designs, 5 LLD designs, 6 leadership prompts, and 2
+GenAI story slots. Existing matching questions/stories are tagged without resetting
+progress; four new DSA questions bring the seeded bank to 118. New questions use
+GOOD_TO_DO. These tags reflect the user's list, not independently verified interviews.
+
+Practice in this tab hides patterns and previous notes, provides a plain-text solution
+area (no IDE/autocomplete/execution), a configurable timer, and dry-run/follow-up
+checks and notes. Drafts and timing use the existing saved state; story slots remain
+empty until the user supplies real examples.
