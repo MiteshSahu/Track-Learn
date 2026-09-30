@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f3f7f2">
 <title>Track &amp; Learn — Mitesh's Prep Tracker</title>
+<link rel="stylesheet" href="amazon-prep.css">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="shortcut icon" href="favicon.svg">
 <script>
@@ -1147,6 +1148,8 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;padding:30px 0;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="amazon-prep-data.js"></script>
+<script src="amazon-prep.js"></script>
 <script>
 /* ========================= DATA ========================= */
 
@@ -2032,7 +2035,7 @@ const COMPANY_CATALOG = [
 /* ========================= STATE / STORAGE ========================= */
 
 const STORE_KEY = "track_learn_state_v1";
-const STATE_SCHEMA_VERSION = 2;
+const STATE_SCHEMA_VERSION = 3;
 const ACTIVE_TAB_KEY = "track_learn_active_tab";
 const THEME_KEY = "track_learn_theme";
 const SUPABASE_STATE_TABLE = "track_learn_profiles";
@@ -2300,6 +2303,7 @@ function migrateState(s){
     });
   });
   normalizeStoredNotes(s);
+  AmazonPrep.migrate(s);
   return s;
 }
 let state = loadState();
@@ -2649,6 +2653,7 @@ const TAB_ORDER = [
   {key:"todo", label:"To Do"},
   {key:"dsa", label:"DSA"},
   {key:"amazon", label:"Amazon Top Questions"},
+  {key:"amazonprep", label:"Amazon SDE II Preparation"},
   {key:"mastercard", label:"Mastercard"},
   {key:"teradata", label:"Teradata Prep"},
   {key:"corejava", label:"Core Java"},
@@ -6086,7 +6091,7 @@ function bindTodoControls(){
 }
 
 function getProgressNodes(){
-  return TAB_ORDER.filter(t=>t.key!=="progress" && t.key!=="todo" && t.key!=="mastercard").map((tab,idx)=>{
+  return TAB_ORDER.filter(t=>t.key!=="progress" && t.key!=="todo" && t.key!=="amazonprep" && t.key!=="mastercard").map((tab,idx)=>{
     let progress;
     if(tab.key==="dsa") progress = getDsaProgress();
     else if(tab.key==="amazon") progress = getAmazonProgress();
@@ -6513,6 +6518,7 @@ function renderView(key){
   else if(key==="todo"){todoShouldScrollLatest=true;renderTodoView();}
   else if(key==="dsa") renderDSAView();
   else if(key==="amazon") renderAmazonView();
+  else if(key==="amazonprep") AmazonPrep.render();
   else if(key==="systemdesign") renderSystemDesignView();
   else if(key==="applications") renderApplicationsView();
   else if(key==="personal") renderPersonalView();
@@ -6525,7 +6531,7 @@ function computeStreak(){
   let streak = 0;
   let d = new Date();
   let key = todayStr();
-  const practicedOn = dayKey=>((state.dsaLog[dayKey] || 0) + (state.amazonLog?.[dayKey] || 0)) > 0;
+  const practicedOn = dayKey=>((state.dsaLog[dayKey] || 0) + (state.amazonLog?.[dayKey] || 0)) > 0 || !!state.amazonPrep?.activity?.[dayKey];
   if(!practicedOn(key)){
     d.setDate(d.getDate()-1);
   }

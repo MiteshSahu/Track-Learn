@@ -1,0 +1,125 @@
+// Run with NODE_PATH pointing at Playwright. Uses an isolated browser and local test server.
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+(async()=>{
+ const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
+ const server=http.createServer((req,res)=>{const file=req.url==='/'?'index.html':req.url.slice(1);if(!['index.html','amazon-prep.js','amazon-prep-data.js','amazon-prep.css','favicon.svg'].includes(file)){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(fs.readFileSync(path.join(__dirname,'..',file)));});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const browser=await chromium.launch({headless:true, channel:process.env.PLAYWRIGHT_CHANNEL || "chrome"});
+ const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.stack));
+ await page.route('**/*supabase*',route=>route.abort());
+ await page.goto('http://127.0.0.1:'+server.address().port);
+ await page.evaluate(()=>{
+   const q=AMAZON_CATEGORIES[Object.keys(AMAZON_CATEGORIES).find(cat=>AMAZON_CATEGORIES[cat].questions.some(q=>q.num===146))].questions.find(q=>q.num===146);
+   const cat=Object.keys(AMAZON_CATEGORIES).find(cat=>AMAZON_CATEGORIES[cat].questions.includes(q));
+   const key=amazonBuiltInKey(cat,q);
+   state.amazonNotes[key]={body:'My existing LRU Java code <T> and notes',links:[{tag:'reference',url:'https://example.com'}],confidence:4};
+   state.amazonDone[key]='2026-09-20';state.amazonRevisions[key]=1;
+   state.todos.push({id:'preserve-me',title:'Existing task',done:false,date:'2026-09-30'});save();
+ });
+ await page.getByRole('button',{name:'Amazon SDE II Preparation',exact:true}).click();
+ assert.equal(await page.evaluate(()=>AmazonPrep.progress().dsa>0),true);
+ assert.equal(await page.evaluate(()=>Object.keys(state.amazonPrep.questions).length),114);
+ assert.equal(await page.evaluate(()=>{const before=JSON.stringify(state);AmazonPrep.migrate(state);return before===JSON.stringify(state);}),true,'idempotent migration');
+ assert.deepEqual(await page.evaluate(()=>AmazonPrep.matches({num:1,title:'Name',url:'https://leetcode.com/problems/test/'},[{num:2,title:'Name'},{num:1,title:'Other'},{title:'Different',url:'https://leetcode.com/problems/test/'}]).map(q=>q.rank)),[1,2,3]);
+ await page.getByRole('button',{name:'DSA',exact:true}).last().click();
+ assert.equal(await page.locator('#ap-results .ap-q').count(),114);
+ assert.equal(await page.locator('.ap-filter-menu').getAttribute('open'),null);assert.equal(await page.locator('.ap-summary .donut').count(),1);
+ await page.locator('#ap-filters [data-field=priority]').selectOption('GOOD_TO_DO');
+ assert.equal(await page.locator('#ap-results .ap-q').count(),20);
+ await page.locator('#ap-filters [data-field=priority]').selectOption('MUST_DO');
+ assert.equal(await page.locator('#ap-results .ap-q').count(),57);
+ await page.getByRole('button',{name:'Reset filters'}).click();
+ await page.locator('.ap-filter-menu > summary').click();await page.locator('[data-field=top]').check();assert.equal(await page.locator('#ap-results .ap-q').count(),11);
+ await page.getByRole('button',{name:'Reset filters'}).click();
+ await page.locator('.ap-filter-menu > summary').click();await page.locator('[data-field=amazon]').check();assert.equal(await page.locator('#ap-results .ap-q').count(),await page.evaluate(()=>AMAZON_PREP_DATA.questions.filter(q=>q.amazonTagged).length));
+ await page.getByRole('button',{name:'Reset filters'}).click();
+ await page.locator('#ap-results [data-open="lc-146"]').click();
+ assert.equal(await page.getByText('Attempt History',{exact:true}).count(),0);
+ assert.equal(await page.getByRole('button',{name:'Interview Mode',exact:true}).count(),0);
+ assert.equal(await page.locator('[data-field=status]:visible').count(),0);
+ assert.equal(await page.locator('#ap-code').count(),0);
+ assert.equal(await page.locator('[data-field=language]').count(),0);
+ await page.locator('#ap-question-note').fill('Saved notes with solution');
+ await page.getByRole('button',{name:'Save Note',exact:true}).click();
+ await page.getByRole('button',{name:'Add link',exact:true}).click();
+ await page.getByRole('textbox',{name:'Link URL',exact:true}).fill('https://example.com/solution');
+ await page.getByRole('button',{name:'Save Link',exact:true}).click();
+ await page.locator('#ap-results [data-revisit="lc-146"]').click();
+ assert.equal(await page.locator('#ap-results [data-revisit="lc-146"]').textContent(),'Revisit');
+ await page.reload();
+ await page.locator('#ap-results [data-open="lc-146"]').click();
+ assert.equal(await page.locator('#ap-question-note').innerText(),'Saved notes with solution');
+ assert.equal(await page.getByRole('link',{name:'https://example.com/solution',exact:true}).count(),1);
+ assert.equal(await page.locator('#ap-results [data-revisit="lc-146"]').textContent(),'Revisit');
+ assert.equal(await page.locator('[data-tab="Overview"], [data-tab="Calendar"]').count(),0);
+ assert.equal(await page.getByText('Revision practice',{exact:true}).count(),0);
+ for(const label of ['HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Final Revision']) {
+   await page.getByRole('button',{name:label,exact:true}).click();assert.equal(await page.locator('#ap-content .ap-card, #ap-content .q-card').count()>0,true,label);
+ }
+ await page.getByRole('button',{name:'DSA',exact:true}).last().click();
+ assert.equal(await page.locator('#apHeatmap .activity-month').count(),13);
+ assert.equal(await page.locator('#apWeeklyChart circle').count(),30);
+ const leftBefore=Number(await page.locator('[data-remaining=dsa]').textContent());
+ const solvedBefore=Number((await page.locator('#ap-solved-today').innerText()).split(': ')[1]);
+ await page.locator('#ap-results [data-q-done="lc-1"]').check();
+ assert.equal(Number(await page.locator('[data-remaining=dsa]').textContent()),leftBefore-1);
+ assert.equal(await page.locator('#ap-solved-today').innerText(),'Solved Today: '+(solvedBefore+1));
+ assert.match(await page.locator('#apWeeklyChart g title').last().textContent(),new RegExp('^'+(solvedBefore+1)+' solved'));
+ await page.reload();
+ assert.equal(Number(await page.locator('[data-remaining=dsa]').textContent()),leftBefore-1);
+ assert.equal(await page.locator('#ap-solved-today').innerText(),'Solved Today: '+(solvedBefore+1));
+ assert.equal(await page.evaluate(()=>state.amazonPrep.questions['lc-1'].status),'SOLVED_WITH_HELP');
+ await page.locator('#ap-results [data-q-done="lc-1"]').uncheck();
+ assert.equal(Number(await page.locator('[data-remaining=dsa]').textContent()),leftBefore);
+ assert.equal(await page.locator('#ap-solved-today').innerText(),'Solved Today: '+solvedBefore);
+ assert.equal(await page.evaluate(()=>state.amazonPrep.questions['lc-1'].status),'NOT_STARTED');
+ for(const [label,kind] of [['HLD','hld'],['LLD','lld'],['Leadership / Bar Raiser','stories'],['Projects','projects'],['Mocks','mocks']]) {
+   await page.getByRole('button',{name:label,exact:true}).click();
+   assert.equal(await page.locator('#ap-content [data-field]').count(),0,'no detailed forms');
+   await page.locator('[data-topic-open="0"]').click();
+   await page.locator('#ap-topic-note').fill(label+' saved notes and code');
+   await page.getByRole('button',{name:'Save Note',exact:true}).click();
+   await page.locator('[data-topic-done="0"]').check();
+   assert.equal(await page.evaluate(kind=>state.amazonPrep[kind][0].complete,kind),true);
+   if(['hld','lld','stories'].includes(kind))assert.equal(Number(await page.locator('[data-remaining='+kind+']').textContent()),await page.evaluate(kind=>Object.values(state.amazonPrep[kind]).filter(r=>!r.complete).length,kind));
+   await page.locator('[data-topic-done="0"]').uncheck();
+   assert.equal(await page.evaluate(kind=>state.amazonPrep[kind][0].complete,kind),false);
+   await page.locator('[data-topic-done="0"]').check();
+ }
+ await page.reload();
+ for(const [label,kind] of [['HLD','hld'],['LLD','lld'],['Leadership / Bar Raiser','stories'],['Projects','projects'],['Mocks','mocks']]) {
+   await page.getByRole('button',{name:label,exact:true}).click();
+   assert.equal(await page.locator('[data-topic-done="0"]').isChecked(),true);
+   await page.locator('[data-topic-open="0"]').click();
+   assert.match(await page.locator('#ap-topic-note').innerText(),/saved notes and code/);
+ }
+ assert.equal(await page.evaluate(()=>state.todos.some(t=>t.id==='preserve-me')),true);
+ assert.equal(await page.evaluate(()=>AmazonPrep.phase('2026-10-05')),'Phase 1 — DSA Intensive');
+ assert.equal(await page.evaluate(()=>AmazonPrep.recommend('2026-10-03').every(q=>AmazonPrep.weights[state.amazonPrep.questions[q.id].status]>=35)),true);
+ assert.equal(await page.evaluate(()=>AMAZON_PREP_DATA.questions.every(q=>/^https:\/\/leetcode.com\/problems\//.test(q.url))),true);
+ await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Amazon SDE II Preparation',exact:true}).click();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'mobile horizontal overflow');
+ await page.screenshot({path:'/tmp/amazon-prep-mobile.png',fullPage:false,animations:'disabled'});
+ await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:'/tmp/amazon-prep-desktop.png',fullPage:false,animations:'disabled'});
+ await page.getByRole('button',{name:'DSA',exact:true}).last().click();
+ await page.getByRole('button',{name:'+ Create'}).click();await page.locator('.modal-box [name=title]').fill('Two Sum');await page.locator('.modal-box [name=num]').fill('1');await page.locator('.modal-box [name=url]').fill('https://leetcode.com/problems/two-sum/');await page.locator('.modal-box [name=newCategory]').fill('Arrays');await page.getByRole('button',{name:'Add Question',exact:true}).click();assert.equal(await page.evaluate(()=>state.amazonPrep.customQuestions.length),0,'duplicate prevention');
+ await page.getByRole('button',{name:'DSA',exact:true}).last().click();await page.getByRole('button',{name:'+ Create'}).click();await page.locator('.modal-box [name=title]').fill('Future practice');await page.locator('.modal-box [name=url]').fill('https://leetcode.com/problems/future-practice/');await page.locator('.modal-box [name=newCategory]').fill('Arrays');await page.getByRole('button',{name:'Add Question',exact:true}).click();assert.equal(await page.evaluate(()=>state.amazonPrep.customQuestions.length),1);
+ await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'mobile detail overflow');
+ assert.equal(await page.evaluate(()=>{const pr=AmazonPrep.progress();return Math.abs(pr.overall-(pr.dsa*.4+pr.hld*.2+pr.lld*.15+pr.lp*.15+pr.projects*.05+pr.mocks*.05))<1e-8;}),true);
+ for(const label of ['HLD','LLD','Leadership / Bar Raiser','Projects','Mocks']) {
+   await page.getByRole('button',{name:label,exact:true}).click();
+   await page.getByRole('button',{name:'+ Create',exact:true}).click();
+   await page.locator('.modal-box [name=title]').fill('Custom '+label);
+   await page.locator('.modal-box [name=url]').fill('https://example.com/resource');
+   await page.locator('.modal-box button[type=submit]').click();
+   await page.getByRole('button',{name:'Custom '+label,exact:true}).click();
+   assert.equal(await page.getByRole('link',{name:'https://example.com/resource',exact:true}).count(),1);
+ }
+ await page.reload();
+ await page.getByRole('button',{name:'HLD',exact:true}).click();
+ assert.equal(await page.getByRole('button',{name:'Custom HLD',exact:true}).count(),1);
+ for(const label of ['Progress Tree','To Do','DSA','Amazon Top Questions','System Design','Personal']) {await page.locator('#tabBar').getByRole('button',{name:label,exact:true}).click();}
+ assert.deepEqual(errors,[]);console.log('PASS: migration, 114 seeds, filters, code save/update/reload, preserved notes, inline notes and completion checkboxes, all tabs, design/mock persistence, calendar carry, mobile, no page errors');
+ await browser.close();server.close();
+})().catch(e=>{console.error(e);process.exit(1);});
