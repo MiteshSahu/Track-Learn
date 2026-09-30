@@ -1120,6 +1120,14 @@ html[data-theme="dark"] .activity-month .month-label{color:var(--muted);}
 @media (max-width:700px){.qa-list{grid-template-columns:1fr}.personal-note-actions{gap:4px}.personal-note-head{padding:13px}.qa-item.open{grid-column:auto;}}
 
 footer{text-align:center;color:var(--muted);font-size:.75rem;padding:30px 0;}
+/* Compact day cards and bulk selection reuse the To Do board. */
+.todo-board-actions{display:flex;flex-wrap:wrap;gap:8px}.todo-toolbar{flex-wrap:wrap;gap:12px}
+.todo-date-card.date-only{display:flex;align-items:center;min-height:48px}
+.todo-date-only{width:100%;padding:16px;border:0;background:transparent;color:var(--text);text-align:left;font:700 .9rem var(--sans);cursor:pointer}
+.todo-date-only:hover{background:var(--accent-soft)}
+.todo-date-card.selected{outline:2px solid var(--accent);outline-offset:-2px}
+.todo-card-select{padding:0 12px;display:flex;align-items:center}.todo-card-select input{width:18px;height:18px;accent-color:var(--accent)}
+.todo-board-actions button:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
@@ -5889,6 +5897,10 @@ function getApplicationsProgress(){
 
 let todoFilter = "all";
 let expandedTodoDates = new Set();
+let todoDatesOnly = false;
+let todoJumpToEnd = false;
+let todoSelectMode = false;
+let selectedTodoDates = new Set();
 let todoShouldScrollLatest = true;
 let todoBoardScroll = {top:0,left:0};
 
@@ -5972,10 +5984,13 @@ function renderTodoView(){
     const parsed = todoDate(date);
     const done = todos.filter(todo=>todo.done).length;
     const expanded = expandedTodoDates.has(date);
+    const collapsed = todoDatesOnly && !expanded;
+    const selection = todoSelectMode ? `<label class="todo-card-select"><input type="checkbox" class="select-todo-card" data-date="${date}" ${selectedTodoDates.has(date)?"checked":""} aria-label="Select card ${date}"></label>` : "";
+    if(collapsed) return `<section class="todo-date-card date-only ${selectedTodoDates.has(date)?"selected":""}" data-date="${date}">${selection}<button class="todo-date-only toggle-todo-date" data-date="${date}" aria-expanded="false" aria-label="Expand checklist for ${date}">${parsed.toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})}</button></section>`;
     const shownTodos = expanded ? todos : todos.slice(0,4);
     return `<section class="todo-date-card ${date===today?"is-today":""} ${expanded?"expanded":""}" data-date="${date}">
       <div class="todo-card-head">
-        <div class="todo-calendar"><small>${parsed.toLocaleDateString(undefined,{month:"short"})}</small><b>${parsed.getDate()}</b></div>
+        ${selection}<div class="todo-calendar"><small>${parsed.toLocaleDateString(undefined,{month:"short"})}</small><b>${parsed.getDate()}</b></div>
         <div class="todo-card-title"><h3>${todoDateLabel(date)}</h3><p>${parsed.toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})}</p></div>
         <div class="todo-card-tools"><span class="todo-card-count">${done}/${todos.length}</span><button class="todo-expand toggle-todo-date" data-date="${date}" title="${expanded?"Collapse":"Expand"} this day's checklist" aria-label="${expanded?"Collapse":"Expand"} checklist">⌄</button></div>
       </div>
@@ -6019,6 +6034,10 @@ function renderTodoView(){
     </div>
     ${todoHistoryHTML()}
     <div class="todo-toolbar">
+      <div class="todo-board-actions">
+        <button class="btn small secondary" id="collapseTodoDates">Collapse all · bottom right ↘</button>
+        ${todoSelectMode?`<button class="btn small" id="deleteSelectedTodoCards" ${selectedTodoDates.size?"":"disabled"}>Delete selected (${selectedTodoDates.size})</button><button class="btn small secondary" id="cancelTodoSelection">Cancel selection</button>`:`<button class="btn small secondary" id="selectTodoCards">Delete cards</button>`}
+      </div>
       <div class="todo-filters">
         ${[["all","All"],["today","Today"],["upcoming","Upcoming"],["overdue","Overdue"],["completed","Completed"]].map(([key,label])=>`<button class="todo-filter ${todoFilter===key?"active":""}" data-filter="${key}">${label}</button>`).join("")}
       </div>
@@ -6033,7 +6052,8 @@ function renderTodoView(){
     const history=document.getElementById("todoHistoryScroll");
     if(history) history.scrollLeft=history.scrollWidth;
     const board=document.getElementById("todoDateGrid");
-    if(board && todoShouldScrollLatest){board.scrollTop=board.scrollHeight;board.scrollLeft=board.scrollWidth;todoShouldScrollLatest=false;}
+    if(board && todoJumpToEnd){board.scrollIntoView({block:"end",inline:"end"});board.scrollTo({top:board.scrollHeight,left:board.scrollWidth,behavior:"instant"});todoBoardScroll={top:board.scrollTop,left:board.scrollLeft};todoJumpToEnd=false;todoShouldScrollLatest=false;}
+    else if(board && todoShouldScrollLatest){board.scrollTop=board.scrollHeight;board.scrollLeft=board.scrollWidth;todoShouldScrollLatest=false;}
     else if(board){board.scrollTop=todoBoardScroll.top;board.scrollLeft=todoBoardScroll.left;}
   });
 }
@@ -6074,7 +6094,24 @@ function openTodoDialog(todo=null,defaultDate=todayStr()){
 function bindTodoControls(){
   const rememberBoardScroll=()=>{const board=document.getElementById("todoDateGrid");if(board)todoBoardScroll={top:board.scrollTop,left:board.scrollLeft};};
   document.getElementById("openTodoModal").onclick = ()=>openTodoDialog();
-  document.querySelectorAll(".todo-filter").forEach(btn=>btn.onclick=()=>{todoFilter=btn.dataset.filter;todoShouldScrollLatest=true;renderTodoView();});
+  document.getElementById("collapseTodoDates").onclick=()=>{todoDatesOnly=true;expandedTodoDates.clear();todoJumpToEnd=true;renderTodoView();};
+  const selectCards=document.getElementById("selectTodoCards");
+  if(selectCards)selectCards.onclick=()=>{rememberBoardScroll();todoSelectMode=true;selectedTodoDates.clear();renderTodoView();};
+  const cancelSelection=document.getElementById("cancelTodoSelection");
+  if(cancelSelection)cancelSelection.onclick=()=>{rememberBoardScroll();todoSelectMode=false;selectedTodoDates.clear();renderTodoView();};
+  document.querySelectorAll(".select-todo-card").forEach(input=>input.onchange=()=>{
+    if(input.checked)selectedTodoDates.add(input.dataset.date);else selectedTodoDates.delete(input.dataset.date);
+    const button=document.getElementById("deleteSelectedTodoCards");button.disabled=!selectedTodoDates.size;button.textContent=`Delete selected (${selectedTodoDates.size})`;
+    input.closest(".todo-date-card").classList.toggle("selected",input.checked);
+  });
+  const deleteCards=document.getElementById("deleteSelectedTodoCards");
+  if(deleteCards)deleteCards.onclick=()=>{
+    const count=state.todos.filter(todo=>selectedTodoDates.has(todo.date)).length;
+    if(!count||!confirm(`Delete ${selectedTodoDates.size} day card(s) and all ${count} tasks on those dates, including tasks hidden by the current filter? This cannot be undone.`))return;
+    rememberBoardScroll();state.todos=state.todos.filter(todo=>!selectedTodoDates.has(todo.date));
+    selectedTodoDates.forEach(date=>expandedTodoDates.delete(date));selectedTodoDates.clear();todoSelectMode=false;save();renderTodoView();
+  };
+  document.querySelectorAll(".todo-filter").forEach(btn=>btn.onclick=()=>{todoFilter=btn.dataset.filter;selectedTodoDates.clear();todoShouldScrollLatest=true;renderTodoView();});
   document.querySelectorAll(".toggle-todo-date").forEach(btn=>btn.onclick=()=>{
     rememberBoardScroll();
     if(expandedTodoDates.has(btn.dataset.date)) expandedTodoDates.delete(btn.dataset.date); else expandedTodoDates.add(btn.dataset.date);
