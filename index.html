@@ -452,7 +452,8 @@ h2.view-title{font-family:var(--serif);font-size:1.72rem;font-weight:800;margin-
 .note-editor-toolbar,.note-format-btn{cursor:pointer;}
 .note-edit-surface:focus{border-color:#82c592;box-shadow:inset 3px 0 0 var(--accent),0 0 0 2px rgba(61,139,82,.1);background:color-mix(in srgb,#fff 97%,var(--accent-soft));}
 .note-edit-surface:empty::before{content:attr(data-placeholder);color:#8a968d;pointer-events:none;}
-.note-edit-surface ul{margin:4px 0;padding-left:22px;}
+.note-edit-surface ul,.note-edit-surface ol{margin:4px 0;padding-inline-start:26px;list-style-position:outside;}
+.note-edit-surface li{max-width:100%;overflow-wrap:anywhere;}
 .note-edit-surface p,.note-edit-surface div{margin:0;}
 .note-edit-surface li{margin:2px 0;}
 .note-edit-surface ul.note-checklist{list-style:none;padding-left:2px;display:flex;flex-direction:column;gap:5px;}
@@ -3595,6 +3596,13 @@ function sanitizeNoteHTML(html){
       [...element.attributes].forEach(attr=>element.removeAttribute(attr.name));
     }
   });
+  // Clipboard selections may contain bare list items without their list wrapper.
+  [...template.content.querySelectorAll('li')].forEach(item=>{
+    if(['UL','OL'].includes(item.parentElement?.tagName))return;
+    const list=document.createElement('ul');item.before(list);
+    let next=item;
+    while(next?.nodeType===Node.ELEMENT_NODE && next.tagName==='LI'){const following=next.nextSibling;list.append(next);next=following;}
+  });
   template.content.querySelectorAll("ul.note-checklist > li").forEach(item=>{
     const checkbox=item.querySelector(":scope > input[type='checkbox']");
     const groups=[];
@@ -3753,6 +3761,17 @@ function toggleNoteHighlight(editor){
 }
 
 function bindNoteFormatting(){
+  document.querySelectorAll('.note-edit-surface').forEach(editor=>{
+    editor.onpaste=event=>{
+      const html=event.clipboardData?.getData('text/html');
+      if(!html)return;
+      event.preventDefault();
+      // Reuse the save-time sanitizer so source indentation/styles cannot escape the editor.
+      document.execCommand('insertHTML',false,sanitizeNoteHTML(html));
+      editor.dispatchEvent(new Event('input',{bubbles:true}));
+      bindNoteFormatting();
+    };
+  });
   document.querySelectorAll(".note-format-btn").forEach(btn=>{
     btn.onmousedown = event=>event.preventDefault();
     btn.onclick = ()=>{
