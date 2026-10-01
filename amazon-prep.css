@@ -19,3 +19,5 @@
 html[data-theme="dark"] .ap .ap-q.revisit{border-color:#7b622f}
 .ap .ap-note-status{font-size:.78rem;color:var(--accent);align-self:center}
 .ap .q-note-panel.note-expanded .note-edit-surface{min-height:52vh}
+
+.ap-affirmations{margin:0 0 18px;padding:14px 18px;border-left:3px solid var(--accent);border-radius:var(--radius);background:var(--accent-soft);color:var(--text)}.ap-affirmations p{margin:4px 0;font-size:.9rem;font-weight:600;line-height:1.6}
