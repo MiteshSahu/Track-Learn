@@ -309,16 +309,31 @@ window.AmazonPrep = (() => {
     // Display previously saved code in the same notes editor without deleting its source.
     let body=n.body || '';
     if(!n.codeInNotes && n.solutions?.some(s=>s.code)) body=NOTE_RICH_PREFIX+noteBodyToHTML(body)+n.solutions.filter(s=>s.code).map(s=>'<div><b>'+esc(s.title||'Solution')+'</b></div><div>'+esc(s.code).replace(/\n/g,'<br>')+'</div>').join('');
-    panel.innerHTML=noteEditorHTML(id,body,'Write notes, approach, or paste code...')+`<div class="link-chips"></div><div class="link-form"><input aria-label="Link tag" placeholder="Tag e.g. video" data-link-tag><input aria-label="Link URL" type="url" placeholder="Paste link" data-link-url>${button('Save Link','save-link')}</div><div class="row-actions">${button('Save Note','save-note')}${button('Add link','add-link')}${button('Expand','expand-note')}${button('Close','close-note')}</div>`;
-    const saveNote=()=>{n.body=getNoteEditorBody(id);if(n.solutions?.length)n.codeInNotes=true;if(onSave)onSave(n);persist();showSaved('Note saved.');};
+    panel.innerHTML=noteEditorHTML(id,body,'Write notes, approach, or paste code...')+`<div class="link-chips"></div><div class="link-form"><input aria-label="Link tag" placeholder="Tag e.g. video" data-link-tag><input aria-label="Link URL" type="url" placeholder="Paste link" data-link-url>${button('Save Link','save-link')}</div><div class="row-actions">${button('Save Note','save-note')}${button('Add link','add-link')}${button('Expand','expand-note')}${button('Close','close-note')}<span class="ap-note-status" role="status" aria-live="polite"></span></div>`;
+    const saveButton=panel.querySelector('[data-action="save-note"]');
+    saveButton.classList.add('save-q-note');saveButton.classList.remove('secondary');
+    const feedback=message=>{panel.querySelector('.ap-note-status').textContent=message;};
+    const dirty=()=>{markNearestSaveButtonDirty(panel.querySelector('.note-edit-surface'));feedback('Unsaved changes');};
+    panel.querySelector('.note-edit-surface').oninput=dirty;
+    panel.querySelectorAll('.link-form input').forEach(input=>input.oninput=dirty);
+    const saveNote=()=>{
+      const input=panel.querySelector('[data-link-url]'),url=input.value.trim();
+      if(url&&(!/^https?:\/\//i.test(url)||!input.reportValidity())){feedback('Enter an http or https URL.');return false;}
+      if(url){const tag=panel.querySelector('[data-link-tag]').value.trim()||'resource';if(!n.links.some(l=>l.url===url&&l.tag===tag))n.links.push({tag,url});}
+      n.body=getNoteEditorBody(id);if(n.solutions?.length)n.codeInNotes=true;if(onSave)onSave(n);
+      try{persist();}catch(error){feedback('Could not save. Keep this note open and try again.');return false;}
+      clearSaveButtonDirty(saveButton);feedback('Saved');showSaved('Note saved.');
+      if(url){input.value='';panel.querySelector('[data-link-tag]').value='';panel.querySelector('.link-form').classList.remove('open');panel.querySelector('[data-action="add-link"]').textContent='Add link';}
+      links();return true;
+    };
     const links=()=>{
       panel.querySelector('.link-chips').innerHTML=n.links.map((l,i)=>`<span class="link-chip"><span>${esc(l.tag||'link')}</span><a href="${esc(/^https?:\/\//i.test(l.url)?l.url:'#')}" target="_blank" rel="noopener noreferrer">${esc(l.url)}</a><button data-remove-link="${i}" aria-label="Remove link">x</button></span>`).join('');
       panel.querySelectorAll('[data-remove-link]').forEach(el=>el.onclick=()=>{n.links.splice(+el.dataset.removeLink,1);saveNote();links();});
     };
     links();
     panel.querySelector('[data-action="save-note"]').onclick=saveNote;
-    panel.querySelector('[data-action="add-link"]').onclick=e=>{const form=panel.querySelector('.link-form');form.classList.toggle('open');e.target.textContent=form.classList.contains('open')?'Hide link':'Add link';};
-    panel.querySelector('[data-action="save-link"]').onclick=()=>{const input=panel.querySelector('[data-link-url]'),url=input.value.trim();if(!/^https?:\/\//i.test(url)||!input.reportValidity()){showSaved('Enter an http or https URL.');return;}const tag=panel.querySelector('[data-link-tag]').value.trim()||'resource';if(!n.links.some(l=>l.url===url&&l.tag===tag))n.links.push({tag,url});saveNote();links();input.value='';};
+    panel.querySelector('[data-action="add-link"]').onclick=e=>{const form=panel.querySelector('.link-form');form.classList.toggle('open');e.target.textContent=form.classList.contains('open')?'Hide link':'Add link';if(form.classList.contains('open'))panel.querySelector('[data-link-url]').focus();};
+    panel.querySelector('[data-action="save-link"]').onclick=()=>{if(!panel.querySelector('[data-link-url]').value.trim()){feedback('Paste a link first.');panel.querySelector('[data-link-url]').focus();return;}saveNote();};
     panel.querySelector('[data-action="expand-note"]').onclick=e=>{panel.classList.toggle('note-expanded');e.target.textContent=panel.classList.contains('note-expanded')?'Collapse':'Expand';};
     panel.querySelector('[data-action="close-note"]').onclick=()=>{panel.classList.remove('open');panel.innerHTML='';};
     bindNoteFormatting();
