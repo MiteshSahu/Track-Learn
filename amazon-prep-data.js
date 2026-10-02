@@ -1180,6 +1180,18 @@ window.AMAZON_PREP_DATA = {
       "recentExperience": true
     },
     {
+      "id": "lc-208",
+      "num": 208,
+      "title": "Implement Trie (Prefix Tree)",
+      "category": "Backtracking / Trie",
+      "pattern": "Backtracking / Trie",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/implement-trie-prefix-tree/"
+    },
+    {
       "id": "lc-212",
       "num": 212,
       "title": "Word Search II",
