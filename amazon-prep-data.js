@@ -1440,6 +1440,174 @@ window.AMAZON_PREP_DATA = {
       "topPriority": false,
       "url": "https://leetcode.com/problems/reorganize-string/",
       "recentExperience": true
+    },
+    {
+      "id": "lc-70",
+      "num": 70,
+      "title": "Climbing Stairs",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/climbing-stairs/"
+    },
+    {
+      "id": "lc-746",
+      "num": 746,
+      "title": "Min Cost Climbing Stairs",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/min-cost-climbing-stairs/"
+    },
+    {
+      "id": "lc-213",
+      "num": 213,
+      "title": "House Robber II",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/house-robber-ii/"
+    },
+    {
+      "id": "lc-518",
+      "num": 518,
+      "title": "Coin Change II",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/coin-change-ii/"
+    },
+    {
+      "id": "lc-416",
+      "num": 416,
+      "title": "Partition Equal Subset Sum",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/partition-equal-subset-sum/"
+    },
+    {
+      "id": "lc-494",
+      "num": 494,
+      "title": "Target Sum",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/target-sum/"
+    },
+    {
+      "id": "lc-62",
+      "num": 62,
+      "title": "Unique Paths",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/unique-paths/"
+    },
+    {
+      "id": "lc-64",
+      "num": 64,
+      "title": "Minimum Path Sum",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/minimum-path-sum/"
+    },
+    {
+      "id": "lc-72",
+      "num": 72,
+      "title": "Edit Distance",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/edit-distance/"
+    },
+    {
+      "id": "lc-673",
+      "num": 673,
+      "title": "Number of Longest Increasing Subsequence",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/number-of-longest-increasing-subsequence/"
+    },
+    {
+      "id": "lc-516",
+      "num": 516,
+      "title": "Longest Palindromic Subsequence",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/longest-palindromic-subsequence/"
+    },
+    {
+      "id": "lc-312",
+      "num": 312,
+      "title": "Burst Balloons",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Hard",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/burst-balloons/"
+    },
+    {
+      "id": "lc-309",
+      "num": 309,
+      "title": "Best Time to Buy and Sell Stock with Cooldown",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/"
+    },
+    {
+      "id": "lc-714",
+      "num": 714,
+      "title": "Best Time to Buy and Sell Stock with Transaction Fee",
+      "category": "DP",
+      "pattern": "DP",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/"
     }
   ],
   "hld": [
@@ -1944,5 +2112,67 @@ window.AMAZON_PREP_DATA = {
         "aliases": []
       }
     ]
-  }
+  },
+  "dpRevision": [
+    {
+      "title": "1D DP",
+      "questions": [
+        "lc-70",
+        "lc-746",
+        "lc-198",
+        "lc-213"
+      ]
+    },
+    {
+      "title": "Target / Amount DP",
+      "questions": [
+        "lc-322",
+        "lc-518",
+        "lc-416",
+        "lc-494"
+      ]
+    },
+    {
+      "title": "Grid DP",
+      "questions": [
+        "lc-62",
+        "lc-64"
+      ]
+    },
+    {
+      "title": "String Segmentation DP",
+      "questions": [
+        "lc-139",
+        "lc-91"
+      ]
+    },
+    {
+      "title": "Two-String DP",
+      "questions": [
+        "lc-1143",
+        "lc-72"
+      ]
+    },
+    {
+      "title": "Subsequence DP",
+      "questions": [
+        "lc-300",
+        "lc-673"
+      ]
+    },
+    {
+      "title": "Interval DP",
+      "questions": [
+        "lc-516",
+        "lc-312"
+      ]
+    },
+    {
+      "title": "State-Machine DP",
+      "questions": [
+        "lc-309",
+        "lc-714"
+      ]
+    }
+  ]
 };
