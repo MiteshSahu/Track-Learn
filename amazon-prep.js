@@ -7,7 +7,7 @@ window.AmazonPrep = (() => {
   const projectStates = ['NOT_STARTED','PREPARED','PRACTICED','MOCKED','INTERVIEW_READY'];
   const foundationStates = ['NOT_STARTED','LEARNED','REVISED','CAN_EXPLAIN_IN_INTERVIEW'];
   const barStates = ['No Story','Story Drafted','Practiced','Deep-Dive Ready'];
-  const tabs = ['DSA','DP Revision','HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Recent Experience','Final Revision'];
+  const tabs = ['DSA','DP Revision','Graph Revision','HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Recent Experience','Final Revision'];
   const topTen = [146,200,207,297,236,239,3,560,253,295];
   const textFields = ['Approach Used','Pattern Recognition','Key Insight','Common Mistake','Edge Cases','Follow-up','Alternative Approach','Time Complexity','Space Complexity','Interview Explanation'];
   let recentSection='DSA';
@@ -83,7 +83,8 @@ window.AmazonPrep = (() => {
     return ['DSA — 3–4 familiar problems maximum; revise templates','HLD / LLD — redo 2 designs across final days','LP — review stories and follow-ups','Both projects — 20-minute whiteboard explanation'];
   }
   const prep = () => state.amazonPrep;
-  const questions = () => [...D.questions,...prep().customQuestions];
+  const allQuestions = () => [...D.questions,...prep().customQuestions];
+  const questions = () => allQuestions().filter(q=>!q.revisionOnly);
   const record = q => prep().questions[q.id];
   function noteFor(q, sourceIndex=0) {
     const source=record(q).sources[sourceIndex] || record(q).sources[0];
@@ -188,7 +189,8 @@ window.AmazonPrep = (() => {
     const days=Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())));
     const qs=questions(),left=qs.filter(q=>weights[record(q).status]<35);
     const items=[['days','Days remaining',days,'Until 30 Oct 2026'],['dsa','DSA left',left.length,left.filter(q=>q.priority==='MUST_DO').length+' MUST_DO remaining'],...['hld','lld','stories'].map(kind=>{const records=Object.values(prep()[kind]);return [kind,kind==='stories'?'Leadership left':kind.toUpperCase()+' left',records.filter(r=>!topicDone(kind,r)).length,'of '+records.length+' '+(kind==='stories'?'stories':'topics')];})];
-    return items.map(([key,label,value,hint])=>`<div class="ap-remaining-item"><span>${label}</span><strong data-remaining="${key}">${value}</strong><small>${esc(hint)}</small></div>`).join('');
+    const completion=progress();
+    return items.map(([key,label,value,hint])=>{const pct=key==='days'?Math.round(Math.max(0,Math.min(1,(30-days)/30))*100):Math.round(completion[key==='stories'?'lp':key]);return `<div class="ap-remaining-item"><span>${label}</span><strong data-remaining="${key}">${value}</strong><small>${esc(hint)}</small><div class="ap-completion"><span class="ap-pie" style="--completion:${pct}%" role="img" aria-label="${pct}% ${key==='days'?'of preparation window elapsed':'complete'}"></span><small>${pct}% ${key==='days'?'elapsed':'complete'}</small></div></div>`;}).join('');
   }
   function updateRemainingSummary() {const el=document.getElementById('ap-remaining');if(el)el.innerHTML=remainingSummaryHTML();}
   function render() {
@@ -198,13 +200,14 @@ window.AmazonPrep = (() => {
     // Seed only into the existing persistence envelope. Safe to repeat after remote loads.
     persist(false);
     const main=document.getElementById('mainArea');
-    main.innerHTML=`<div class="view active ap" id="amazon-prep"><div class="view-header"><div><h2 class="view-title">Amazon SDE II Preparation</h2><div class="view-desc">30 October 2026 · ${Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())))} days remaining</div></div>${!['Final Revision','Recent Experience','DP Revision'].includes(tab)?'<div class="view-header-actions"><button class="modal-trigger-btn" id="ap-create">+ Create</button></div>':''}</div><div class="ap-phase"><span id="ap-save-status" role="status" aria-live="polite"></span></div><section class="ap-affirmations" aria-label="Motivation and manifestation"><p>I will become SDE II at Amazon.</p><p>I will get an offer from Amazon soon.</p><p>I will clear all the upcoming interview rounds successfully at Amazon.</p></section><section id="ap-remaining" class="ap-remaining" aria-label="Preparation remaining">${remainingSummaryHTML()}</section><nav class="ap-tabs dsa-cat-tabs" aria-label="Amazon preparation">${tabs.map(t=>`<button class="cat-btn ${t===tab?'active':''}" data-tab="${esc(t)}" aria-current="${t===tab?'page':'false'}">${esc(t)}</button>`).join('')}</nav><div id="ap-content"></div></div>`;
+    main.innerHTML=`<div class="view active ap" id="amazon-prep"><div class="view-header"><div><h2 class="view-title">Amazon SDE II Preparation</h2><div class="view-desc">30 October 2026 · ${Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())))} days remaining</div></div>${!['Final Revision','Recent Experience','DP Revision','Graph Revision'].includes(tab)?'<div class="view-header-actions"><button class="modal-trigger-btn" id="ap-create">+ Create</button></div>':''}</div><div class="ap-phase"><span id="ap-save-status" role="status" aria-live="polite"></span></div><section class="ap-affirmations" aria-label="Motivation and manifestation"><p>I will become SDE II at Amazon.</p><p>I will get an offer from Amazon soon.</p><p>I will clear all the upcoming interview rounds successfully at Amazon.</p></section><section id="ap-remaining" class="ap-remaining" aria-label="Preparation remaining">${remainingSummaryHTML()}</section><nav class="ap-tabs dsa-cat-tabs" aria-label="Amazon preparation">${tabs.map(t=>`<button class="cat-btn ${t===tab?'active':''}" data-tab="${esc(t)}" aria-current="${t===tab?'page':'false'}">${esc(t)}</button>`).join('')}</nav><div id="ap-content"></div></div>`;
     const root=document.getElementById('ap-content');
     const create=document.getElementById('ap-create');if(create)create.onclick=()=>createDialog();
     main.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.tab;selected='';render();});
     if(tab==='Overview') overview(root);
     if(tab==='DSA') dsa(root);
-    if(tab==='DP Revision') dpRevision(root);
+    if(tab==='DP Revision') revisionView(root,D.dpRevision);
+    if(tab==='Graph Revision') revisionView(root,D.graphRevision);
     if(tab==='HLD'||tab==='LLD') designs(root,tab.toLowerCase());
     if(tab==='Leadership / Bar Raiser') leadership(root);
     if(tab==='Projects') projects(root);
@@ -220,11 +223,11 @@ window.AmazonPrep = (() => {
     bindNoteFormatting();
     if(selected){const target=root.querySelector(`[data-open="${selected}"]`);selected='';if(target)target.click();}
   }
-  function dpRevision(root) {
-    const byId=new Map(questions().map(q=>[q.id,q]));
-    const list=D.dpRevision.flatMap(group=>group.questions.map(id=>byId.get(id)));
+  function revisionView(root,groups) {
+    const byId=new Map(allQuestions().map(q=>[q.id,q]));
+    const list=[...new Set(groups.flatMap(group=>group.questions))].map(id=>byId.get(id));
     const done=list.filter(q=>weights[record(q).status]>=35).length;
-    root.innerHTML=`<div class="cat-progress">${done}/${list.length} completed</div><div class="q-list">${D.dpRevision.map(group=>`<h3 class="dsa-section-title ap-pattern-title">${esc(group.title)}</h3>${group.questions.map(id=>qRow(byId.get(id))).join('')}`).join('')}</div>`;
+    root.innerHTML=`<div class="cat-progress">${done}/${list.length} completed</div><div class="q-list">${groups.map(group=>`<h3 class="dsa-section-title ap-pattern-title">${esc(group.title)}${group.priority?` <small class="ap-muted">${esc(group.priority)}</small>`:''}</h3>${group.questions.map(id=>qRow(byId.get(id))).join('')}`).join('')}</div>`;
   }
   function qRow(q) {
     const r=record(q);
@@ -283,8 +286,8 @@ window.AmazonPrep = (() => {
       if(isDSA){
         const category=form.elements.newCategory.value.trim()||form.elements.category.value;
         const q={id:'custom-'+Date.now(),title,num:form.elements.num.value?+form.elements.num.value:'',url:safeURL(url),category,pattern:category,difficulty:form.elements.difficulty.value,priority:form.elements.priority.value,amazonTagged:false,topPriority:false};
-        const existing=matches(q,questions())[0];
-        if(existing){close();filters={};selected=existing.id;render();showSaved('Existing question opened.');return;}
+        const existing=matches(q,allQuestions())[0];
+        if(existing){close();filters={};if(existing.revisionOnly)tab=D.dpRevision.some(group=>group.questions.includes(existing.id))?'DP Revision':'Graph Revision';selected=existing.id;render();showSaved('Existing question opened.');return;}
         prep().customQuestions.push(q);migrate(state);if(url&&!q.url)noteFor(q).links.push({tag:'resource',url});selected=q.id;filters={};
       }else{
         if(Object.values(prep()[kind]).some(r=>canonical(r.title)===canonical(title))){overlay.querySelector('#ap-create-error').textContent='This topic already exists.';return;}
@@ -296,7 +299,7 @@ window.AmazonPrep = (() => {
   function bindQuestionRows(root) {
     root.querySelectorAll('.ap-q .q-row').forEach(row=>row.onclick=e=>{if(!e.target.closest('input,button,a,select'))row.querySelector('[data-open]').click();});
     root.querySelectorAll('[data-q-done]').forEach(el=>el.onchange=()=>{
-      const q=questions().find(q=>q.id===el.dataset.qDone),r=record(q);
+      const q=allQuestions().find(q=>q.id===el.dataset.qDone),r=record(q);
       if(el.checked) changeStatus(q,r.previousStatus&&weights[r.previousStatus]>=35?r.previousStatus:'SOLVED_WITH_HELP');
       else {r.previousStatus=r.status;r.status='NOT_STARTED';for(const src of r.sources){const date=state[src.store+'Done'][src.key];if(date&&state[src.store+'Log'][date])state[src.store+'Log'][date]=Math.max(0,state[src.store+'Log'][date]-1);delete state[src.store+'Done'][src.key];}}
       persist();render();
@@ -306,7 +309,7 @@ window.AmazonPrep = (() => {
       const panel=el.closest('.q-card').querySelector('.ap-inline-panel'),wasOpen=panel.classList.contains('open');
       root.querySelectorAll('.ap-inline-panel').forEach(p=>{p.classList.remove('open');p.innerHTML='';});
       if(wasOpen)return;
-      const q=questions().find(q=>q.id===el.dataset.open),n=noteFor(q);n.solutions ||= [];
+      const q=allQuestions().find(q=>q.id===el.dataset.open),n=noteFor(q);n.solutions ||= [];
       panel.classList.add('open');
       notesPanel(panel,n,'ap-question-note');
     });

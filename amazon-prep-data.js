@@ -1451,7 +1451,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/climbing-stairs/"
+      "url": "https://leetcode.com/problems/climbing-stairs/",
+      "revisionOnly": true
     },
     {
       "id": "lc-746",
@@ -1463,7 +1464,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/min-cost-climbing-stairs/"
+      "url": "https://leetcode.com/problems/min-cost-climbing-stairs/",
+      "revisionOnly": true
     },
     {
       "id": "lc-213",
@@ -1475,7 +1477,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/house-robber-ii/"
+      "url": "https://leetcode.com/problems/house-robber-ii/",
+      "revisionOnly": true
     },
     {
       "id": "lc-518",
@@ -1487,7 +1490,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/coin-change-ii/"
+      "url": "https://leetcode.com/problems/coin-change-ii/",
+      "revisionOnly": true
     },
     {
       "id": "lc-416",
@@ -1499,7 +1503,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/partition-equal-subset-sum/"
+      "url": "https://leetcode.com/problems/partition-equal-subset-sum/",
+      "revisionOnly": true
     },
     {
       "id": "lc-494",
@@ -1511,7 +1516,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/target-sum/"
+      "url": "https://leetcode.com/problems/target-sum/",
+      "revisionOnly": true
     },
     {
       "id": "lc-62",
@@ -1523,7 +1529,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/unique-paths/"
+      "url": "https://leetcode.com/problems/unique-paths/",
+      "revisionOnly": true
     },
     {
       "id": "lc-64",
@@ -1535,7 +1542,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/minimum-path-sum/"
+      "url": "https://leetcode.com/problems/minimum-path-sum/",
+      "revisionOnly": true
     },
     {
       "id": "lc-72",
@@ -1547,7 +1555,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/edit-distance/"
+      "url": "https://leetcode.com/problems/edit-distance/",
+      "revisionOnly": true
     },
     {
       "id": "lc-673",
@@ -1559,7 +1568,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/number-of-longest-increasing-subsequence/"
+      "url": "https://leetcode.com/problems/number-of-longest-increasing-subsequence/",
+      "revisionOnly": true
     },
     {
       "id": "lc-516",
@@ -1571,7 +1581,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/longest-palindromic-subsequence/"
+      "url": "https://leetcode.com/problems/longest-palindromic-subsequence/",
+      "revisionOnly": true
     },
     {
       "id": "lc-312",
@@ -1583,7 +1594,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/burst-balloons/"
+      "url": "https://leetcode.com/problems/burst-balloons/",
+      "revisionOnly": true
     },
     {
       "id": "lc-309",
@@ -1595,7 +1607,8 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/"
+      "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/",
+      "revisionOnly": true
     },
     {
       "id": "lc-714",
@@ -1607,7 +1620,164 @@ window.AMAZON_PREP_DATA = {
       "priority": "GOOD_TO_DO",
       "amazonTagged": false,
       "topPriority": false,
-      "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/"
+      "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/",
+      "revisionOnly": true
+    },
+    {
+      "id": "lc-1971",
+      "num": 1971,
+      "title": "Find if Path Exists in Graph",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/find-if-path-exists-in-graph/"
+    },
+    {
+      "id": "lc-1319",
+      "num": 1319,
+      "title": "Number of Operations to Make Network Connected",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/number-of-operations-to-make-network-connected/"
+    },
+    {
+      "id": "lc-990",
+      "num": 990,
+      "title": "Satisfiability of Equality Equations",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/satisfiability-of-equality-equations/"
+    },
+    {
+      "id": "lc-269",
+      "num": 269,
+      "title": "Alien Dictionary",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Hard",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/alien-dictionary/"
+    },
+    {
+      "id": "lc-1311",
+      "num": 1311,
+      "title": "Get Watched Videos by Your Friends",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/get-watched-videos-by-your-friends/"
+    },
+    {
+      "id": "lc-1368",
+      "num": 1368,
+      "title": "Minimum Cost to Make at Least One Valid Path in a Grid",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Hard",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/minimum-cost-to-make-at-least-one-valid-path-in-a-grid/"
+    },
+    {
+      "id": "lc-847",
+      "num": 847,
+      "title": "Shortest Path Visiting All Nodes",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Hard",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/shortest-path-visiting-all-nodes/"
+    },
+    {
+      "id": "lc-399",
+      "num": 399,
+      "title": "Evaluate Division",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/evaluate-division/"
+    },
+    {
+      "id": "lc-997",
+      "num": 997,
+      "title": "Find the Town Judge",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/find-the-town-judge/"
+    },
+    {
+      "id": "lc-3310",
+      "num": 3310,
+      "title": "Remove Methods From Project",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/remove-methods-from-project/"
+    },
+    {
+      "id": "lc-2467",
+      "num": 2467,
+      "title": "Most Profitable Path in a Tree",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/most-profitable-path-in-a-tree/"
+    },
+    {
+      "id": "lc-4046",
+      "num": 4046,
+      "title": "Minimum Cost Path With At Most K Turns",
+      "category": "Graph",
+      "pattern": "Graph",
+      "difficulty": "Hard",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/minimum-cost-path-with-at-most-k-turns/"
     }
   ],
   "hld": [
@@ -2173,6 +2343,111 @@ window.AMAZON_PREP_DATA = {
         "lc-309",
         "lc-714"
       ]
+    }
+  ],
+  "graphRevision": [
+    {
+      "title": "Basic DFS/BFS traversal",
+      "questions": [
+        "lc-1971",
+        "lc-547",
+        "lc-133"
+      ],
+      "priority": "Very High"
+    },
+    {
+      "title": "Connected Components / Union Find",
+      "questions": [
+        "lc-547",
+        "lc-1319",
+        "lc-990"
+      ],
+      "priority": "Very High"
+    },
+    {
+      "title": "Directed Graph + Cycle Detection",
+      "questions": [
+        "lc-207"
+      ],
+      "priority": "Extremely High"
+    },
+    {
+      "title": "Topological Sort",
+      "questions": [
+        "lc-210",
+        "lc-269"
+      ],
+      "priority": "Extremely High"
+    },
+    {
+      "title": "Bipartite / Graph Coloring",
+      "questions": [
+        "lc-785"
+      ],
+      "priority": "High"
+    },
+    {
+      "title": "BFS by Levels / Social Graph",
+      "questions": [
+        "lc-1311"
+      ],
+      "priority": "Medium-High"
+    },
+    {
+      "title": "Weighted Shortest Path",
+      "questions": [
+        "lc-787"
+      ],
+      "priority": "Very High"
+    },
+    {
+      "title": "Special Shortest Path",
+      "questions": [
+        "lc-1368"
+      ],
+      "priority": "High"
+    },
+    {
+      "title": "Graph with State",
+      "questions": [
+        "lc-847"
+      ],
+      "priority": "High/Hard"
+    },
+    {
+      "title": "DFS with Weights / Ratios",
+      "questions": [
+        "lc-399"
+      ],
+      "priority": "High"
+    },
+    {
+      "title": "Degree / Indegree Pattern",
+      "questions": [
+        "lc-997"
+      ],
+      "priority": "Medium"
+    },
+    {
+      "title": "Reachability + Graph Constraints",
+      "questions": [
+        "lc-3310"
+      ],
+      "priority": "Medium-High"
+    },
+    {
+      "title": "Tree as Graph",
+      "questions": [
+        "lc-2467"
+      ],
+      "priority": "High"
+    },
+    {
+      "title": "Advanced State + Dijkstra",
+      "questions": [
+        "lc-4046"
+      ],
+      "priority": "Advanced"
     }
   ]
 };
