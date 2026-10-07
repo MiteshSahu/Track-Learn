@@ -41,7 +41,20 @@ const assert=require('node:assert/strict');
  await page.getByRole('button',{name:'DSA',exact:true}).last().click();
 
 
- assert.equal(await page.evaluate(()=>Object.keys(state.amazonPrep.questions).length),145);
+ await page.getByRole('button',{name:'Tree Revision',exact:true}).click();
+ assert.equal(await page.locator('#ap-content .ap-pattern-title').count(),7);
+ assert.equal(await page.locator('#ap-content .ap-q').count(),18);
+ assert.equal(await page.locator('#ap-content a.ytlink').count(),18);
+ await page.locator('[data-q-done="lc-144"]').check();
+ assert.equal(await page.evaluate(()=>AmazonPrep.progress().dsa),beforeRevision);
+ await page.locator('[data-revisit="lc-144"]').click();
+ assert.equal(await page.locator('[data-revisit="lc-144"]').evaluate(el=>el.closest('.q-card').classList.contains('revisit')),true);
+ await page.locator('[data-open="lc-144"]').click();
+ assert.equal(await page.locator('.ap-inline-panel.open').count(),1);
+ await page.setViewportSize({width:390,height:844});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'tree revision mobile overflow');
+ await page.setViewportSize({width:1280,height:720});
+ assert.equal(await page.evaluate(()=>Object.keys(state.amazonPrep.questions).length),153);
  assert.equal(await page.evaluate(()=>{const before=JSON.stringify(state);AmazonPrep.migrate(state);return before===JSON.stringify(state);}),true,'idempotent migration');
  assert.deepEqual(await page.evaluate(()=>AmazonPrep.matches({num:1,title:'Name',url:'https://leetcode.com/problems/test/'},[{num:2,title:'Name'},{num:1,title:'Other'},{title:'Different',url:'https://leetcode.com/problems/test/'}]).map(q=>q.rank)),[1,2,3]);
  await page.getByRole('button',{name:'DSA',exact:true}).last().click();
@@ -149,6 +162,6 @@ const assert=require('node:assert/strict');
  await page.getByRole('button',{name:'HLD',exact:true}).click();
  assert.equal(await page.getByRole('button',{name:'Custom HLD',exact:true}).count(),1);
  for(const label of ['Progress Tree','To Do','DSA','Amazon Top Questions','System Design','Personal']) {await page.locator('#tabBar').getByRole('button',{name:label,exact:true}).click();}
- assert.deepEqual(errors,[]);console.log('PASS: migration, 119 core questions and 26 revision-only seeds, filters, code save/update/reload, preserved notes, inline notes and completion checkboxes, all tabs, design/mock persistence, calendar carry, mobile, no page errors');
+ assert.deepEqual(errors,[]);console.log('PASS: migration, 119 core questions and 34 revision-only seeds, filters, code save/update/reload, preserved notes, inline notes and completion checkboxes, all tabs, design/mock persistence, calendar carry, mobile, no page errors');
  await browser.close();server.close();
 })().catch(e=>{console.error(e);process.exit(1);});

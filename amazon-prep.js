@@ -7,7 +7,7 @@ window.AmazonPrep = (() => {
   const projectStates = ['NOT_STARTED','PREPARED','PRACTICED','MOCKED','INTERVIEW_READY'];
   const foundationStates = ['NOT_STARTED','LEARNED','REVISED','CAN_EXPLAIN_IN_INTERVIEW'];
   const barStates = ['No Story','Story Drafted','Practiced','Deep-Dive Ready'];
-  const tabs = ['DSA','DP Revision','Graph Revision','HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Recent Experience','Final Revision'];
+  const tabs = ['DSA','DP Revision','Graph Revision','Tree Revision','HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Recent Experience','Final Revision'];
   const topTen = [146,200,207,297,236,239,3,560,253,295];
   const textFields = ['Approach Used','Pattern Recognition','Key Insight','Common Mistake','Edge Cases','Follow-up','Alternative Approach','Time Complexity','Space Complexity','Interview Explanation'];
   let recentSection='DSA';
@@ -200,7 +200,7 @@ window.AmazonPrep = (() => {
     // Seed only into the existing persistence envelope. Safe to repeat after remote loads.
     persist(false);
     const main=document.getElementById('mainArea');
-    main.innerHTML=`<div class="view active ap" id="amazon-prep"><div class="view-header"><div><h2 class="view-title">Amazon SDE II Preparation</h2><div class="view-desc">30 October 2026 · ${Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())))} days remaining</div></div>${!['Final Revision','Recent Experience','DP Revision','Graph Revision'].includes(tab)?'<div class="view-header-actions"><button class="modal-trigger-btn" id="ap-create">+ Create</button></div>':''}</div><div class="ap-phase"><span id="ap-save-status" role="status" aria-live="polite"></span></div><section class="ap-affirmations" aria-label="Motivation and manifestation"><p>I will become SDE II at Amazon.</p><p>I will get an offer from Amazon soon.</p><p>I will clear all the upcoming interview rounds successfully at Amazon.</p></section><section id="ap-remaining" class="ap-remaining" aria-label="Preparation remaining">${remainingSummaryHTML()}</section><nav class="ap-tabs dsa-cat-tabs" aria-label="Amazon preparation">${tabs.map(t=>`<button class="cat-btn ${t===tab?'active':''}" data-tab="${esc(t)}" aria-current="${t===tab?'page':'false'}">${esc(t)}</button>`).join('')}</nav><div id="ap-content"></div></div>`;
+    main.innerHTML=`<div class="view active ap" id="amazon-prep"><div class="view-header"><div><h2 class="view-title">Amazon SDE II Preparation</h2><div class="view-desc">30 October 2026 · ${Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())))} days remaining</div></div>${!['Final Revision','Recent Experience','DP Revision','Graph Revision','Tree Revision'].includes(tab)?'<div class="view-header-actions"><button class="modal-trigger-btn" id="ap-create">+ Create</button></div>':''}</div><div class="ap-phase"><span id="ap-save-status" role="status" aria-live="polite"></span></div><section class="ap-affirmations" aria-label="Motivation and manifestation"><p>I will become SDE II at Amazon.</p><p>I will get an offer from Amazon soon.</p><p>I will clear all the upcoming interview rounds successfully at Amazon.</p></section><section id="ap-remaining" class="ap-remaining" aria-label="Preparation remaining">${remainingSummaryHTML()}</section><nav class="ap-tabs dsa-cat-tabs" aria-label="Amazon preparation">${tabs.map(t=>`<button class="cat-btn ${t===tab?'active':''}" data-tab="${esc(t)}" aria-current="${t===tab?'page':'false'}">${esc(t)}</button>`).join('')}</nav><div id="ap-content"></div></div>`;
     const root=document.getElementById('ap-content');
     const create=document.getElementById('ap-create');if(create)create.onclick=()=>createDialog();
     main.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.tab;selected='';render();});
@@ -208,6 +208,7 @@ window.AmazonPrep = (() => {
     if(tab==='DSA') dsa(root);
     if(tab==='DP Revision') revisionView(root,D.dpRevision);
     if(tab==='Graph Revision') revisionView(root,D.graphRevision);
+    if(tab==='Tree Revision') revisionView(root,D.treeRevision);
     if(tab==='HLD'||tab==='LLD') designs(root,tab.toLowerCase());
     if(tab==='Leadership / Bar Raiser') leadership(root);
     if(tab==='Projects') projects(root);
@@ -287,7 +288,7 @@ window.AmazonPrep = (() => {
         const category=form.elements.newCategory.value.trim()||form.elements.category.value;
         const q={id:'custom-'+Date.now(),title,num:form.elements.num.value?+form.elements.num.value:'',url:safeURL(url),category,pattern:category,difficulty:form.elements.difficulty.value,priority:form.elements.priority.value,amazonTagged:false,topPriority:false};
         const existing=matches(q,allQuestions())[0];
-        if(existing){close();filters={};if(existing.revisionOnly)tab=D.dpRevision.some(group=>group.questions.includes(existing.id))?'DP Revision':'Graph Revision';selected=existing.id;render();showSaved('Existing question opened.');return;}
+        if(existing){close();filters={};if(existing.revisionOnly)tab=D.dpRevision.some(group=>group.questions.includes(existing.id))?'DP Revision':D.graphRevision.some(group=>group.questions.includes(existing.id))?'Graph Revision':'Tree Revision';selected=existing.id;render();showSaved('Existing question opened.');return;}
         prep().customQuestions.push(q);migrate(state);if(url&&!q.url)noteFor(q).links.push({tag:'resource',url});selected=q.id;filters={};
       }else{
         if(Object.values(prep()[kind]).some(r=>canonical(r.title)===canonical(title))){overlay.querySelector('#ap-create-error').textContent='This topic already exists.';return;}

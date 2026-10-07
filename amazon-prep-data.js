@@ -1778,6 +1778,110 @@ window.AMAZON_PREP_DATA = {
       "topPriority": false,
       "revisionOnly": true,
       "url": "https://leetcode.com/problems/minimum-cost-path-with-at-most-k-turns/"
+    },
+    {
+      "id": "lc-144",
+      "num": 144,
+      "title": "Binary Tree Preorder Traversal",
+      "category": "Trees",
+      "pattern": "Trees",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/binary-tree-preorder-traversal/"
+    },
+    {
+      "id": "lc-94",
+      "num": 94,
+      "title": "Binary Tree Inorder Traversal",
+      "category": "Trees",
+      "pattern": "Trees",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/binary-tree-inorder-traversal/"
+    },
+    {
+      "id": "lc-145",
+      "num": 145,
+      "title": "Binary Tree Postorder Traversal",
+      "category": "Trees",
+      "pattern": "Trees",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/binary-tree-postorder-traversal/"
+    },
+    {
+      "id": "lc-100",
+      "num": 100,
+      "title": "Same Tree",
+      "category": "Trees",
+      "pattern": "Trees",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/same-tree/"
+    },
+    {
+      "id": "lc-103",
+      "num": 103,
+      "title": "Binary Tree Zigzag Level Order Traversal",
+      "category": "Trees",
+      "pattern": "Trees",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/"
+    },
+    {
+      "id": "lc-112",
+      "num": 112,
+      "title": "Path Sum",
+      "category": "Trees",
+      "pattern": "Trees",
+      "difficulty": "Easy",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/path-sum/"
+    },
+    {
+      "id": "lc-235",
+      "num": 235,
+      "title": "Lowest Common Ancestor of a Binary Search Tree",
+      "category": "Trees",
+      "pattern": "Trees",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/"
+    },
+    {
+      "id": "lc-105",
+      "num": 105,
+      "title": "Construct Binary Tree from Preorder and Inorder Traversal",
+      "category": "Trees",
+      "pattern": "Trees",
+      "difficulty": "Medium",
+      "priority": "GOOD_TO_DO",
+      "amazonTagged": false,
+      "topPriority": false,
+      "revisionOnly": true,
+      "url": "https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/"
     }
   ],
   "hld": [
@@ -2448,6 +2552,61 @@ window.AMAZON_PREP_DATA = {
         "lc-4046"
       ],
       "priority": "Advanced"
+    }
+  ],
+  "treeRevision": [
+    {
+      "title": "Basic DFS traversal",
+      "questions": [
+        "lc-144",
+        "lc-94",
+        "lc-145",
+        "lc-104",
+        "lc-100"
+      ]
+    },
+    {
+      "title": "BFS / Level Order",
+      "questions": [
+        "lc-102",
+        "lc-199",
+        "lc-103"
+      ]
+    },
+    {
+      "title": "Path-based DFS",
+      "questions": [
+        "lc-112",
+        "lc-124",
+        "lc-543"
+      ]
+    },
+    {
+      "title": "BST pattern",
+      "questions": [
+        "lc-98",
+        "lc-230",
+        "lc-235"
+      ]
+    },
+    {
+      "title": "Tree construction / recursion",
+      "questions": [
+        "lc-105",
+        "lc-297"
+      ]
+    },
+    {
+      "title": "LCA",
+      "questions": [
+        "lc-236"
+      ]
+    },
+    {
+      "title": "Tree + HashMap / parent mapping",
+      "questions": [
+        "lc-863"
+      ]
     }
   ]
 };
