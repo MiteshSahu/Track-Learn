@@ -10,9 +10,7 @@
 <link rel="shortcut icon" href="favicon.svg">
 <script>
 (()=>{
-  const saved = localStorage.getItem("track_learn_theme");
-  const theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.theme = "light";
 })();
 </script>
 <style>
@@ -23,9 +21,9 @@
   --border:#dce8dc;
   --text:#132018;
   --muted:#6f7d72;
-  --accent:#20824b;
+  --accent:#16703e;
   --accent-soft:#e4f5ea;
-  --accent2:#0f2418;
+  --accent2:#16703e;
   --accent2-soft:#edf5ef;
   --danger:#c64242;
   --grid0:#dfe8df;
@@ -1143,7 +1141,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;padding:30px 0;}
   </div>
   <div class="top-actions">
     <div class="streak-pill">Current streak: <b id="streakCount">0</b> days</div>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark theme" aria-pressed="false" title="Switch to dark theme"></button>
+
     <button class="auth-btn" id="authButton">Sign in</button>
     <div class="json-status warn" id="jsonStatus" title="Database health: checking"></div>
   </div>
@@ -2048,25 +2046,13 @@ const STATE_SCHEMA_VERSION = 3;
 const ACTIVE_TAB_KEY = "track_learn_active_tab";
 const THEME_KEY = "track_learn_theme";
 const SUPABASE_STATE_TABLE = "track_learn_profiles";
-function applyTheme(theme, persist=false){
-  const next = theme === "dark" ? "dark" : "light";
-  document.documentElement.dataset.theme = next;
-  if(persist) localStorage.setItem(THEME_KEY, next);
-  const toggle = document.getElementById("themeToggle");
-  const isDark = next === "dark";
-  if(toggle){
-    const label = isDark ? "Switch to light theme" : "Switch to dark theme";
-    toggle.setAttribute("aria-label", label);
-    toggle.setAttribute("aria-pressed", String(isDark));
-    toggle.title = label;
-  }
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", isDark ? "#0d1510" : "#f3f7f2");
+function applyTheme(){
+  document.documentElement.dataset.theme = "light";
+  localStorage.setItem(THEME_KEY, "light");
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#f3f7f2");
 }
 function bindThemeToggle(){
-  const toggle = document.getElementById("themeToggle");
-  if(!toggle) return;
-  applyTheme(document.documentElement.dataset.theme);
-  toggle.onclick = ()=>applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  applyTheme();
 }
 function stableSlug(value){
   return String(value || "")
