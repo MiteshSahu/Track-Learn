@@ -224,11 +224,16 @@ window.AmazonPrep = (() => {
     bindNoteFormatting();
     if(selected){const target=root.querySelector(`[data-open="${selected}"]`);selected='';if(target)target.click();}
   }
+  function topicProgressHTML(qs,label) {
+    const done=qs.filter(q=>weights[record(q).status]>=35).length;
+    const pct=qs.length?Math.round(done/qs.length*100):0;
+    return `<span class="ap-topic-progress"><span class="ap-topic-progress-label">${pct}% <small>(${done}/${qs.length})</small></span><span class="ap-topic-track" role="progressbar" aria-label="${esc(label)} completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></span>`;
+  }
   function revisionView(root,groups) {
     const byId=new Map(allQuestions().map(q=>[q.id,q]));
     const list=[...new Set(groups.flatMap(group=>group.questions))].map(id=>byId.get(id));
     const done=list.filter(q=>weights[record(q).status]>=35).length;
-    root.innerHTML=`<div class="cat-progress">${done}/${list.length} completed</div><div class="q-list">${groups.map(group=>`<h3 class="dsa-section-title ap-pattern-title">${esc(group.title)}${group.priority?` <small class="ap-muted">${esc(group.priority)}</small>`:''}</h3>${group.questions.map(id=>qRow(byId.get(id))).join('')}`).join('')}</div>`;
+    root.innerHTML=`<div class="cat-progress">${done}/${list.length} completed</div><div class="q-list">${groups.map(group=>`<h3 class="dsa-section-title ap-pattern-title">${esc(group.title)}${group.priority?` <small class="ap-muted">${esc(group.priority)}</small>`:''}${topicProgressHTML(group.questions.map(id=>byId.get(id)),group.title)}</h3>${group.questions.map(id=>qRow(byId.get(id))).join('')}`).join('')}</div>`;
   }
   function qRow(q) {
     const r=record(q);
@@ -260,10 +265,10 @@ window.AmazonPrep = (() => {
     }).sort((a,b)=>a.pattern.localeCompare(b.pattern)||priorities.indexOf(a.priority)-priorities.indexOf(b.priority)||a.num-b.num);
   }
   function dsa(root) {
-    root.innerHTML=summaryHTML()+`<div class="ap-list-toolbar" id="ap-filters">${field('Search problems','search',filters.search)}${field('Priority','priority',filters.priority,'select',['',...priorities])}<details class="ap-filter-menu"><summary>Filters</summary><div class="ap-form">${[['pattern',[...new Set(questions().map(q=>q.pattern))]],['difficulty',['Easy','Medium','Hard']],['status',Object.keys(weights)],['confidence',[1,2,3,4,5]]].map(([key,values])=>field(key,key,filters[key],'select',['',...values])).join('')}${field('Recent Experience only','recent',filters.recent,'checkbox')}${field('Amazon Tagged only','amazon',filters.amazon,'checkbox')}${field('Top Priority only','top',filters.top,'checkbox')}${field('Revision Due only','due',filters.due,'checkbox')}</div></details>${button('Reset filters','reset')}</div><div class="dsa-cat-tabs" id="ap-pattern-tabs">${['',...new Set(questions().map(q=>q.pattern))].map(pattern=>`<button class="cat-btn ${(!filters.pattern&&!pattern)||filters.pattern===pattern?'active':''}" data-pattern="${esc(pattern)}">${esc(pattern||'All')}</button>`).join('')}</div><div class="q-list" id="ap-results"></div>`;
+    root.innerHTML=summaryHTML()+`<div class="ap-list-toolbar" id="ap-filters">${field('Search problems','search',filters.search)}${field('Priority','priority',filters.priority,'select',['',...priorities])}<details class="ap-filter-menu"><summary>Filters</summary><div class="ap-form">${[['pattern',[...new Set(questions().map(q=>q.pattern))]],['difficulty',['Easy','Medium','Hard']],['status',Object.keys(weights)],['confidence',[1,2,3,4,5]]].map(([key,values])=>field(key,key,filters[key],'select',['',...values])).join('')}${field('Recent Experience only','recent',filters.recent,'checkbox')}${field('Amazon Tagged only','amazon',filters.amazon,'checkbox')}${field('Top Priority only','top',filters.top,'checkbox')}${field('Revision Due only','due',filters.due,'checkbox')}</div></details>${button('Reset filters','reset')}</div><div class="dsa-cat-tabs" id="ap-pattern-tabs">${['',...new Set(questions().map(q=>q.pattern))].map(pattern=>`<button class="cat-btn ${(!filters.pattern&&!pattern)||filters.pattern===pattern?'active':''}" data-pattern="${esc(pattern)}">${esc(pattern||'All')}${topicProgressHTML(questions().filter(q=>!pattern||q.pattern===pattern),pattern||'All')}</button>`).join('')}</div><div class="q-list" id="ap-results"></div>`;
     root.querySelectorAll('#ap-filters select').forEach(el=>{if(el.options[0].value==='')el.options[0].textContent='All '+el.dataset.field;});
     root.querySelectorAll('[data-pattern]').forEach(el=>el.onclick=()=>{filters.pattern=el.dataset.pattern;render();});
-    const results=()=>{const qs=filteredQuestions();document.getElementById('ap-results').innerHTML=`<p class="ap-muted">${qs.length} of ${questions().length} questions</p>${qs.map((q,i)=>`${i===0||qs[i-1].pattern!==q.pattern?`<h3 class="dsa-section-title ap-pattern-title">${esc(q.pattern)}</h3>`:''}${qRow(q)}`).join('')||'<p>No matching questions.</p>'}`;bindQuestionRows(root);};results();
+    const results=()=>{const qs=filteredQuestions();document.getElementById('ap-results').innerHTML=`<p class="ap-muted">${qs.length} of ${questions().length} questions</p>${qs.map((q,i)=>`${i===0||qs[i-1].pattern!==q.pattern?`<h3 class="dsa-section-title ap-pattern-title">${esc(q.pattern)}${topicProgressHTML(questions().filter(item=>item.pattern===q.pattern),q.pattern)}</h3>`:''}${qRow(q)}`).join('')||'<p>No matching questions.</p>'}`;bindQuestionRows(root);};results();
     root.querySelectorAll('#ap-filters [data-field]').forEach(el=>{el.oninput=()=>{filters[el.dataset.field]=el.type==='checkbox'?el.checked:el.value;results();};});
     root.querySelector('[data-action="reset"]').onclick=()=>{filters={};render();};
 

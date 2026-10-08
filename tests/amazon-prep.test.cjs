@@ -59,6 +59,13 @@ const assert=require('node:assert/strict');
  assert.deepEqual(await page.evaluate(()=>AmazonPrep.matches({num:1,title:'Name',url:'https://leetcode.com/problems/test/'},[{num:2,title:'Name'},{num:1,title:'Other'},{title:'Different',url:'https://leetcode.com/problems/test/'}]).map(q=>q.rank)),[1,2,3]);
  await page.getByRole('button',{name:'DSA',exact:true}).last().click();
  assert.equal(await page.locator('#ap-results .ap-q').count(),119);
+ const verifyPatternBars=async()=>assert.equal(await page.evaluate(()=>[...document.querySelectorAll('#ap-pattern-tabs [data-pattern]')].every(el=>{const qs=AMAZON_PREP_DATA.questions.filter(q=>!q.revisionOnly&&(!el.dataset.pattern||q.pattern===el.dataset.pattern));const done=qs.filter(q=>!['NOT_STARTED','ATTEMPTED'].includes(state.amazonPrep.questions[q.id].status)).length;return Number(el.querySelector('[role=progressbar]').getAttribute('aria-valuenow'))===Math.round(done/qs.length*100);})),true);
+ await verifyPatternBars();
+ const incomplete=page.locator('#ap-results [data-q-done]:not(:checked)').first();
+ const progressId=await incomplete.getAttribute('data-q-done');
+ await page.locator(`[data-q-done="${progressId}"]`).check();await verifyPatternBars();
+ await page.locator(`[data-q-done="${progressId}"]`).uncheck();await verifyPatternBars();
+
  assert.equal(await page.locator('.ap-filter-menu').getAttribute('open'),null);assert.equal(await page.locator('.ap-summary .donut').count(),1);
  await page.locator('#ap-filters [data-field=priority]').selectOption('GOOD_TO_DO');
  assert.equal(await page.locator('#ap-results .ap-q').count(),25);
