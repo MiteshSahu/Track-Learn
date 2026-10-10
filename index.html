@@ -4221,6 +4221,16 @@ function renderWeeklyChart(log=state.dsaLog, targetId="weeklyChart"){
     const key = dateKey(d);
     days.push({date:d, key, count:log[key] || 0});
   }
+  const average = days.slice(-10).reduce((sum, day)=>sum+Number(day.count),0)/10;
+  let averageLabel = wrap.parentElement.querySelector('.daily-average');
+  if(!averageLabel){
+    averageLabel = document.createElement('div');
+    averageLabel.className = 'view-desc daily-average';
+    averageLabel.style.margin = '0';
+    wrap.before(averageLabel);
+  }
+  averageLabel.textContent = `Daily average (last 10 days): ${average.toFixed(1)} solved/day`;
+  averageLabel.title = 'Includes today and the previous 9 days, including days with zero solves.';
   const max = Math.max(1, ...days.map(d=>d.count));
   const width = 900, height = 72, padX = 16, top = 8, bottom = 16;
   const usableW = width - padX*2;
