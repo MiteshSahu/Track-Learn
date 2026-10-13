@@ -29,3 +29,11 @@ html[data-theme="dark"] .ap .ap-q.revisit{border-color:#7b622f}
 .ap .cat-btn.active{background:#16703e;border-color:#16703e;color:#fff}
 
 .ap-revision-controls{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--muted);white-space:nowrap}.ap-revision-controls button{width:26px;height:26px;border:1px solid var(--border);border-radius:6px;background:var(--accent-soft);color:var(--accent);cursor:pointer;font-size:1rem}.ap-revision-controls button:disabled{opacity:.4;cursor:default}
+
+.ap-revision-controls{padding:4px 6px;border-radius:8px;background:#f0f7f1;color:#46634e;transition:background-color .2s,color .2s}
+.ap-revision-controls[data-revision-shade="1"]{background:#d5efdc;color:#245334}
+.ap-revision-controls[data-revision-shade="2"]{background:#a8dbb8;color:#173e25}
+.ap-revision-controls[data-revision-shade="3"]{background:#398452;color:#fff}
+.ap-revision-controls[data-revision-shade="4"]{background:#216b3c;color:#fff}
+.ap-revision-controls[data-revision-shade="5"]{background:#14532d;color:#fff}
+.ap-revision-controls button{background:transparent;color:inherit;border-color:currentColor}
