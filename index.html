@@ -1127,6 +1127,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;padding:30px 0;}
 .todo-date-card.selected{outline:2px solid var(--accent);outline-offset:-2px}
 .todo-card-select{padding:0 12px;display:flex;align-items:center}.todo-card-select input{width:18px;height:18px;accent-color:var(--accent)}
 .todo-board-actions button:disabled{opacity:.5;cursor:default}
+.question-fire{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;color:#89948c}.question-fire svg{width:21px;height:25px;fill:currentColor}.question-fire .fire-core{fill:#fff4b0}.question-fire input{width:48px;padding:4px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--text);font:inherit;font-size:.75rem}.question-fire[data-heat="low"]{color:#c19c61}.question-fire[data-heat="warm"]{color:#e59b24}.question-fire[data-heat="hot"]{color:#f06b19}.question-fire[data-heat="blazing"]{color:#ed351d;filter:drop-shadow(0 0 3px #ff9c48)}
 </style>
 </head>
 <body>
@@ -2463,6 +2464,23 @@ function createAmazonCategory(label){
   state.customAmazonQuestions[key] = [];
   return key;
 }
+function frequencyKey(q){
+  const canonical = value=>String(value||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const match=window.AMAZON_PREP_DATA.questions.find(item=>canonical(item.title)===canonical(q.title));
+  return q.num||match?.num ? 'lc-'+(q.num||match.num) : 'title-'+canonical(q.title);
+}
+function frequencyHTML(q){
+  const key=frequencyKey(q),count=state.amazonFrequency?.[key]||0;
+  const heat=count===0?'none':count<=3?'low':count<10?'warm':count<20?'hot':'blazing';
+  return `<label class="question-fire" onclick="event.stopPropagation()" data-heat="${heat}" title="Amazon frequency: manually entered. 2–3 = low, 30+ = hottest."><svg viewBox="0 0 24 28" aria-hidden="true"><path d="M13 1C15 9 23 10 22 18C21 30 2 30 2 18C2 13 6 9 7 7C6 13 10 14 10 10C10 6 13 5 13 1Z"/><path class="fire-core" d="M12 14C13 18 17 19 16 23C15 27 8 26 8 22C8 19 11 18 12 14Z"/></svg><input type="number" min="0" step="1" value="${count}" data-amazon-frequency="${escapeHTML(key)}" aria-label="Amazon times asked: ${escapeHTML(q.title)}"></label>`;
+}
+document.addEventListener('change',event=>{
+  const input=event.target.closest('[data-amazon-frequency]');if(!input)return;
+  if(!input.reportValidity())return;
+  const count=Number(input.value);if(!Number.isSafeInteger(count)||count<0)return;
+  state.amazonFrequency ||= {};state.amazonFrequency[input.dataset.amazonFrequency]=count;save();
+  document.querySelectorAll('[data-amazon-frequency]').forEach(el=>{if(el.dataset.amazonFrequency===input.dataset.amazonFrequency){el.value=count;el.closest('.question-fire').dataset.heat=count===0?'none':count<=3?'low':count<10?'warm':count<20?'hot':'blazing';}});
+});
 function save(){
   localStorage.setItem(STORE_KEY, JSON.stringify(state));
   updateStreak();
@@ -4299,6 +4317,7 @@ function renderDsaQuestions(){
       <div class="q-row expandable-q-row" data-key="${key}">
         <input type="checkbox" class="dsa-check" data-key="${key}" ${doneInfo?"checked":""}>
         <div class="qname ${doneInfo?"done":""}">${escapeHTML(item.title)}</div>
+      ${frequencyHTML(item)}
         ${doneInfo ? `<div class="date-done">Done ${doneInfo}</div>` : ""}
 
         <div class="difficulty-picker" aria-label="Difficulty">
@@ -5082,6 +5101,7 @@ function amazonQuestionCardHTML(catKey, item){
     <div class="q-row expandable-amazon-row" data-key="${key}">
       <input type="checkbox" class="amazon-check" data-key="${key}" ${doneInfo?"checked":""}>
       <div class="qname ${doneInfo?"done":""}">${displayTitle}</div>
+      ${frequencyHTML(item)}
       ${doneInfo ? `<div class="date-done">Done ${doneInfo}</div>` : ""}
       <div class="difficulty-picker" aria-label="Difficulty">
         <button class="diff-cycle amazon-diff-cycle ${item.difficulty}" data-key="${key}" data-diff="${item.difficulty}" title="Difficulty: ${item.difficulty} — click to change">${item.difficulty.charAt(0).toUpperCase()}</button>
