@@ -10,6 +10,7 @@ window.AmazonPrep = (() => {
   const tabs = ['DSA','DP Revision','Graph Revision','Tree Revision','HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Recent Experience','Final Revision'];
   const topTen = [146,200,207,297,236,239,3,560,253,295];
   const textFields = ['Approach Used','Pattern Recognition','Key Insight','Common Mistake','Edge Cases','Follow-up','Alternative Approach','Time Complexity','Space Complexity','Interview Explanation'];
+  let noteEditorSequence=0;
   let recentSection='DSA';
   let practiceQuestion='';
   let tab = 'DSA', selected = '', filters = {}, dateSelected = '', timerHandle;
@@ -324,14 +325,15 @@ window.AmazonPrep = (() => {
     root.querySelectorAll('[data-revisit]').forEach(el=>el.onclick=()=>{const r=prep().questions[el.dataset.revisit];r.markRevision=!r.markRevision;for(const src of r.sources)state[src.store+'Revisit'][src.key]=r.markRevision;persist();render();});
     root.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>{
       const panel=el.closest('.q-card').querySelector('.ap-inline-panel'),wasOpen=panel.classList.contains('open');
-      root.querySelectorAll('.ap-inline-panel').forEach(p=>{p.classList.remove('open');p.innerHTML='';});
-      if(wasOpen)return;
+      if(wasOpen){panel.classList.remove('open');return;}
+      if(panel.querySelector('.note-edit-surface')){panel.classList.add('open');return;}
       const q=allQuestions().find(q=>q.id===el.dataset.open),n=noteFor(q);n.solutions ||= [];
       panel.classList.add('open');
       notesPanel(panel,n,'ap-question-note');
     });
   }
   function notesPanel(panel,n,id,onSave) {
+    id += '-'+(++noteEditorSequence);
     n.links ||= [];
     // Display previously saved code in the same notes editor without deleting its source.
     let body=n.body || '';
@@ -362,7 +364,7 @@ window.AmazonPrep = (() => {
     panel.querySelector('[data-action="add-link"]').onclick=e=>{const form=panel.querySelector('.link-form');form.classList.toggle('open');e.target.textContent=form.classList.contains('open')?'Hide link':'Add link';if(form.classList.contains('open'))panel.querySelector('[data-link-url]').focus();};
     panel.querySelector('[data-action="save-link"]').onclick=()=>{if(!panel.querySelector('[data-link-url]').value.trim()){feedback('Paste a link first.');panel.querySelector('[data-link-url]').focus();return;}saveNote();};
     panel.querySelector('[data-action="expand-note"]').onclick=e=>{panel.classList.toggle('note-expanded');e.target.textContent=panel.classList.contains('note-expanded')?'Collapse':'Expand';};
-    panel.querySelector('[data-action="close-note"]').onclick=()=>{panel.classList.remove('open');panel.innerHTML='';};
+    panel.querySelector('[data-action="close-note"]').onclick=()=>{panel.classList.remove('open');};
     bindNoteFormatting();
   }
   function topicDone(kind,r) {
@@ -381,8 +383,8 @@ window.AmazonPrep = (() => {
     root.querySelectorAll('[data-topic-done]').forEach(el=>el.onchange=()=>{const r=records[el.dataset.topicDone];r.complete=el.checked;if(kind==='mocks')r.Completed=el.checked;persist();topicRows(root,kind,recentOnly);updateRemainingSummary();});
     root.querySelectorAll('[data-topic-open]').forEach(el=>el.onclick=()=>{
       const panel=el.closest('.q-card').querySelector('.q-note-panel'),open=panel.classList.contains('open');
-      root.querySelectorAll('.q-note-panel').forEach(p=>{p.classList.remove('open');p.innerHTML='';});
-      if(open)return;
+      if(open){panel.classList.remove('open');return;}
+      if(panel.querySelector('.note-edit-surface')){panel.classList.add('open');return;}
       const r=records[el.dataset.topicOpen];panel.classList.add('open');
       notesPanel(panel,{body:topicNote(r),links:r.links||[]},'ap-topic-note',n=>{r.body=n.body;r.links=n.links;});
     });

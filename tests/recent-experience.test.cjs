@@ -21,7 +21,7 @@ const assert=require('node:assert/strict');
  }
  await page.locator('[data-recent-section="Patterns"]').click();
  await page.locator('[data-topic-done]').first().check();
- await page.locator('[data-topic-open]').first().click();await page.locator('#ap-topic-note').fill('Pattern notes');await page.getByRole('button',{name:'Save Note',exact:true}).click();
+ await page.locator('[data-topic-open]').first().click();await page.locator('.q-note-panel.open [id^=ap-topic-note-].note-edit-surface').fill('Pattern notes');await page.getByRole('button',{name:'Save Note',exact:true}).click();
  await page.locator('[data-recent-section="Practice"]').click();
  assert.equal(await page.locator('#ap-recent-content .ap-priority,#ap-recent-content [data-open]').count(),0);
  assert.equal(await page.locator('#ap-recent-content').getByText('Graph',{exact:true}).count(),0);

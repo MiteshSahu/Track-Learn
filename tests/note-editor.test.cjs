@@ -11,7 +11,7 @@ const assert=require('node:assert/strict');
  await page.goto('http://127.0.0.1:'+server.address().port);
  await page.evaluate(()=>switchTab('amazonprep'));
  await page.locator('#ap-results [data-open="lc-1"]').click();
- const editor=page.locator('#ap-question-note');
+ const editor=page.locator('.ap-inline-panel.open [id^=ap-question-note-].note-edit-surface');
  async function setHTML(html){await editor.evaluate((el,html)=>{el.innerHTML=html;el.dispatchEvent(new Event('input',{bubbles:true}));},html);}
  async function select(start=0,end=null){await editor.evaluate((el,{start,end})=>{el.focus();const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let offset=0,n,begun=false;const r=document.createRange();end=end??el.textContent.length;while(n=walker.nextNode()){if(!begun&&start<=offset+n.length){r.setStart(n,start-offset);begun=true;}if(begun&&end<=offset+n.length){r.setEnd(n,end-offset);break;}offset+=n.length;}const s=getSelection();s.removeAllRanges();s.addRange(r);},{start,end});}
  const action=name=>page.locator('.ap-inline-panel.open .note-format-btn[data-action="'+name+'"]').first().click();
