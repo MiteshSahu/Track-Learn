@@ -110,7 +110,10 @@ window.AmazonPrep = (() => {
       if(next==='REVISED_ONCE' || next==='REVISED_TWICE') state[src.store+'Revisions'][src.key]=Math.max(state[src.store+'Revisions'][src.key]||0,next==='REVISED_TWICE'?2:1);
     }
   }
-  const revisionCount = q => Math.max(record(q).revision2?2:record(q).revision1?1:0,record(q).status==='REVISED_TWICE'?2:record(q).status==='REVISED_ONCE'?1:0,...record(q).sources.map(src=>state[src.store+'Revisions'][src.key]||0));
+  const revisionCount = q => {
+    const r=record(q),counts=r.sources.map(src=>state[src.store+'Revisions'][src.key]).filter(value=>value!==undefined);
+    return counts.length?Math.max(0,...counts):Math.max(r.revision2?2:r.revision1?1:0,r.status==='REVISED_TWICE'?2:r.status==='REVISED_ONCE'?1:0);
+  };
   const due = (q,date=today()) => !!(record(q).markRevision || (record(q).nextRevision && record(q).nextRevision<=date));
   function patternStats() {
     return [...new Set(questions().map(q=>q.pattern))].map(pattern=>{
@@ -237,8 +240,7 @@ window.AmazonPrep = (() => {
   }
   function qRow(q) {
     const r=record(q);
-    const hasNote=r.sources.some(src=>{const n=state[src.store+'Notes'][src.key];return n?.body || n?.solutions?.some(s=>s.code);});
-    return `<div class="q-card ap-q ${weights[r.status]>=35?'done':''} ${r.markRevision?'revisit':''}"><div class="q-row"><input type="checkbox" data-q-done="${esc(q.id)}" aria-label="Mark ${esc(q.title)} complete" ${weights[r.status]>=35?'checked':''}><button class="ap-question qname" data-open="${esc(q.id)}">${q.num?esc(q.num)+'. ':''}${esc(q.title)}</button>${frequencyHTML(q)}<span class="ap-priority ap-priority-${q.priority.toLowerCase()}">${esc(q.priority)}</span><span class="diff-cycle ${q.difficulty.toLowerCase()}" title="${esc(q.difficulty)}" aria-label="${esc(q.difficulty)}">${q.difficulty[0]}</span><button class="revisit-toggle ${r.markRevision?'active':''}" data-revisit="${esc(q.id)}">${r.markRevision?'Revisit':'Mark revisit'}</button>${q.recentExperience?badge('Recent Experience'):''}${hasNote?'<span class="note-dot">Notes saved</span>':''}${safeURL(q.url)?`<a class="ytlink" href="${esc(q.url)}" target="_blank" rel="noopener noreferrer">LeetCode ↗</a>`:''}</div><div class="q-note-panel ap-inline-panel"></div></div>`;
+    return `<div class="q-card ap-q ${weights[r.status]>=35?'done':''} ${r.markRevision?'revisit':''}"><div class="q-row"><input type="checkbox" data-q-done="${esc(q.id)}" aria-label="Mark ${esc(q.title)} complete" ${weights[r.status]>=35?'checked':''}><button class="ap-question qname" data-open="${esc(q.id)}">${q.num?esc(q.num)+'. ':''}${esc(q.title)}</button>${frequencyHTML(q)}<span class="ap-priority ap-priority-${q.priority.toLowerCase()}">${esc(q.priority)}</span><span class="diff-cycle ${q.difficulty.toLowerCase()}" title="${esc(q.difficulty)}" aria-label="${esc(q.difficulty)}">${q.difficulty[0]}</span><button class="revisit-toggle ${r.markRevision?'active':''}" data-revisit="${esc(q.id)}">${r.markRevision?'Revisit':'Mark revisit'}</button>${q.recentExperience?badge('Recent Experience'):''}<span class="ap-revision-controls"><button type="button" data-revision-step="-1" data-revision-id="${esc(q.id)}" aria-label="Decrease revisions for ${esc(q.title)}" ${revisionCount(q)===0?'disabled':''}>−</button><span data-revision-count="${esc(q.id)}">${revisionCount(q)} revisions</span><button type="button" data-revision-step="1" data-revision-id="${esc(q.id)}" aria-label="Increase revisions for ${esc(q.title)}">+</button></span>${safeURL(q.url)?`<a class="ytlink" href="${esc(q.url)}" target="_blank" rel="noopener noreferrer">LeetCode ↗</a>`:''}</div><div class="q-note-panel ap-inline-panel"></div></div>`;
   }
   function tasksHTML(date,limit=99) {
     const day=prep().calendar[date];if(!day) return '<p class="ap-muted">The plan runs from 1–30 October. Open Calendar to prepare ahead.</p>';
@@ -303,6 +305,15 @@ window.AmazonPrep = (() => {
     };
   }
   function bindQuestionRows(root) {
+    root.querySelectorAll('[data-revision-step]').forEach(el=>el.onclick=()=>{
+      const q=allQuestions().find(q=>q.id===el.dataset.revisionId);
+      const count=Math.max(0,revisionCount(q)+Number(el.dataset.revisionStep));
+      for(const src of record(q).sources)state[src.store+'Revisions'][src.key]=count;
+      persist();
+      root.querySelectorAll('[data-revision-count]').forEach(label=>{if(label.dataset.revisionCount===q.id)label.textContent=count+' revisions';});
+      root.querySelectorAll('[data-revision-step="-1"]').forEach(button=>{if(button.dataset.revisionId===q.id)button.disabled=count===0;});
+      showSaved();
+    });
     root.querySelectorAll('.ap-q .q-row').forEach(row=>row.onclick=e=>{if(!e.target.closest('input,button,a,select'))row.querySelector('[data-open]').click();});
     root.querySelectorAll('[data-q-done]').forEach(el=>el.onchange=()=>{
       const q=allQuestions().find(q=>q.id===el.dataset.qDone),r=record(q);
