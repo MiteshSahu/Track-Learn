@@ -7,7 +7,7 @@ window.AmazonPrep = (() => {
   const projectStates = ['NOT_STARTED','PREPARED','PRACTICED','MOCKED','INTERVIEW_READY'];
   const foundationStates = ['NOT_STARTED','LEARNED','REVISED','CAN_EXPLAIN_IN_INTERVIEW'];
   const barStates = ['No Story','Story Drafted','Practiced','Deep-Dive Ready'];
-  const tabs = ['DSA','DP Revision','Graph Revision','Tree Revision','HLD','LLD','Leadership / Bar Raiser','Projects','Mocks','Recent Experience','Final Revision'];
+  const tabs = ['DSA','DP Revision','Graph Revision','Tree Revision','HLD','LLD','Leadership / Bar Raiser','Leadership Principles','Projects','Mocks','Recent Experience','Final Revision'];
   const topTen = [146,200,207,297,236,239,3,560,253,295];
   const textFields = ['Approach Used','Pattern Recognition','Key Insight','Common Mistake','Edge Cases','Follow-up','Alternative Approach','Time Complexity','Space Complexity','Interview Explanation'];
   let noteEditorSequence=0;
@@ -45,7 +45,7 @@ window.AmazonPrep = (() => {
   }
   function migrate(s) {
     const p=s.amazonPrep ||= {version:1};
-    for(const key of ['questions','hld','lld','stories','projects','mocks','foundations','bar','calendar','final','activity','patterns','genai','practice']) p[key] ||= {};
+    for(const key of ['questions','hld','lld','stories','projects','mocks','foundations','bar','calendar','final','activity','patterns','genai','practice','principleStories']) p[key] ||= {};
     p.customQuestions ||= [];
     const items=legacyItems(s);
     for(const q of [...D.questions,...p.customQuestions]) {
@@ -204,7 +204,7 @@ window.AmazonPrep = (() => {
     // Seed only into the existing persistence envelope. Safe to repeat after remote loads.
     persist(false);
     const main=document.getElementById('mainArea');
-    main.innerHTML=`<div class="view active ap" id="amazon-prep"><div class="view-header"><div><h2 class="view-title">Amazon SDE II Preparation</h2><div class="view-desc">30 October 2026 · ${Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())))} days remaining</div></div>${!['Final Revision','Recent Experience','DP Revision','Graph Revision','Tree Revision'].includes(tab)?'<div class="view-header-actions"><button class="modal-trigger-btn" id="ap-create">+ Create</button></div>':''}</div><div class="ap-phase"><span id="ap-save-status" role="status" aria-live="polite"></span></div><section class="ap-affirmations" aria-label="Motivation and manifestation"><p>I will become SDE II at Amazon.</p><p>I will get an offer from Amazon soon.</p><p>I will clear all the upcoming interview rounds successfully at Amazon.</p></section><section id="ap-remaining" class="ap-remaining" aria-label="Preparation remaining">${remainingSummaryHTML()}</section><nav class="ap-tabs dsa-cat-tabs" aria-label="Amazon preparation">${tabs.map(t=>`<button class="cat-btn ${t===tab?'active':''}" data-tab="${esc(t)}" aria-current="${t===tab?'page':'false'}">${esc(t)}</button>`).join('')}</nav><div id="ap-content"></div></div>`;
+    main.innerHTML=`<div class="view active ap" id="amazon-prep"><div class="view-header"><div><h2 class="view-title">Amazon SDE II Preparation</h2><div class="view-desc">30 October 2026 · ${Math.max(0,Math.ceil(dayNumber('2026-10-30')-dayNumber(today())))} days remaining</div></div>${!['Final Revision','Recent Experience','DP Revision','Graph Revision','Tree Revision','Leadership Principles'].includes(tab)?'<div class="view-header-actions"><button class="modal-trigger-btn" id="ap-create">+ Create</button></div>':''}</div><div class="ap-phase"><span id="ap-save-status" role="status" aria-live="polite"></span></div><section class="ap-affirmations" aria-label="Motivation and manifestation"><p>I will become SDE II at Amazon.</p><p>I will get an offer from Amazon soon.</p><p>I will clear all the upcoming interview rounds successfully at Amazon.</p></section><section id="ap-remaining" class="ap-remaining" aria-label="Preparation remaining">${remainingSummaryHTML()}</section><nav class="ap-tabs dsa-cat-tabs" aria-label="Amazon preparation">${tabs.map(t=>`<button class="cat-btn ${t===tab?'active':''}" data-tab="${esc(t)}" aria-current="${t===tab?'page':'false'}">${esc(t)}</button>`).join('')}</nav><div id="ap-content"></div></div>`;
     const root=document.getElementById('ap-content');
     const create=document.getElementById('ap-create');if(create)create.onclick=()=>createDialog();
     main.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.tab;selected='';render();});
@@ -215,6 +215,7 @@ window.AmazonPrep = (() => {
     if(tab==='Tree Revision') revisionView(root,D.treeRevision);
     if(tab==='HLD'||tab==='LLD') designs(root,tab.toLowerCase());
     if(tab==='Leadership / Bar Raiser') leadership(root);
+    if(tab==='Leadership Principles') principleStories(root);
     if(tab==='Projects') projects(root);
     if(tab==='Mocks') mocks(root);
     if(tab==='Calendar') calendar(root);
@@ -366,6 +367,23 @@ window.AmazonPrep = (() => {
     panel.querySelector('[data-action="expand-note"]').onclick=e=>{panel.classList.toggle('note-expanded');e.target.textContent=panel.classList.contains('note-expanded')?'Collapse':'Expand';};
     panel.querySelector('[data-action="close-note"]').onclick=()=>{panel.classList.remove('open');};
     bindNoteFormatting();
+  }
+  function principleStories(root) {
+    root.innerHTML=`<div class="ap-lp-heading"><div><h3>My leadership stories</h3><p class="ap-muted">Choose a principle to write or revisit your story.</p></div><button class="btn secondary" data-collapse-principles>Collapse all</button></div><div class="ap-lp-tree">${D.leadershipPrinciples.map((title,i)=>`<details class="ap-lp-branch" data-principle="${i}"><summary><span class="ap-lp-number">${i+1}</span><span>${esc(title)}</span><small data-story-state>${prep().principleStories[title]?.body?'Story saved':'Add story'}</small></summary><div class="ap-lp-editor q-note-panel open"></div></details>`).join('')}</div><a class="ap-muted" href="https://www.aboutamazon.com/about-us/leadership-principles" target="_blank" rel="noopener noreferrer">Amazon’s Leadership Principles ↗</a>`;
+    root.querySelector('[data-collapse-principles]').onclick=()=>root.querySelectorAll('details').forEach(el=>el.open=false);
+    root.querySelectorAll('[data-principle]').forEach(branch=>{
+      branch.ontoggle=()=>{
+        if(!branch.open)return;
+        const panel=branch.querySelector('.ap-lp-editor');
+        if(panel.querySelector('.note-edit-surface'))return;
+        const title=D.leadershipPrinciples[Number(branch.dataset.principle)];
+        const note=prep().principleStories[title] ||= {body:'',links:[]};
+        notesPanel(panel,note,'ap-principle-story',()=>{branch.querySelector('[data-story-state]').textContent='Story saved';});
+        panel.querySelector('[data-action="save-note"]').textContent='Save Story';
+        panel.querySelector('.note-edit-surface').setAttribute('data-placeholder','Write your story: situation, task, actions, and results…');
+        panel.querySelector('[data-action="close-note"]').onclick=()=>{branch.open=false;};
+      };
+    });
   }
   function topicDone(kind,r) {
     if(typeof r.complete==='boolean')return r.complete;
