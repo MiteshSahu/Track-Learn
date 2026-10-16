@@ -46,6 +46,12 @@ window.AmazonPrep = (() => {
   function migrate(s) {
     const p=s.amazonPrep ||= {version:1};
     for(const key of ['questions','hld','lld','stories','projects','mocks','foundations','bar','calendar','final','activity','patterns','genai','practice','principleStories']) p[key] ||= {};
+    p.principleStoryCollections ||= {};
+    for(const title of D.leadershipPrinciples){
+      if(p.principleStoryCollections[title])continue;
+      const old=p.principleStories[title];
+      p.principleStoryCollections[title]=old&&(old.body||old.links?.length)?[{...old,id:'original',title:'Story 1'}]:[];
+    }
     p.customQuestions ||= [];
     const items=legacyItems(s);
     for(const q of [...D.questions,...p.customQuestions]) {
@@ -369,19 +375,34 @@ window.AmazonPrep = (() => {
     bindNoteFormatting();
   }
   function principleStories(root) {
-    root.innerHTML=`<div class="ap-lp-heading"><div><h3>My leadership stories</h3><p class="ap-muted">Choose a principle to write or revisit your story.</p></div><button class="btn secondary" data-collapse-principles>Collapse all</button></div><div class="ap-lp-tree">${D.leadershipPrinciples.map((title,i)=>`<details class="ap-lp-branch" data-principle="${i}"><summary><span class="ap-lp-number">${i+1}</span><span>${esc(title)}</span><small data-story-state>${prep().principleStories[title]?.body?'Story saved':'Add story'}</small></summary><div class="ap-lp-editor q-note-panel open"></div></details>`).join('')}</div><a class="ap-muted" href="https://www.aboutamazon.com/about-us/leadership-principles" target="_blank" rel="noopener noreferrer">Amazon’s Leadership Principles ↗</a>`;
+    root.innerHTML=`<div class="ap-lp-heading"><div><h3>My leadership stories</h3><p class="ap-muted">Expand a principle, then choose a story or add another.</p></div><button class="btn secondary" data-collapse-principles>Collapse all</button></div><div class="ap-lp-tree">${D.leadershipPrinciples.map((title,i)=>`<details class="ap-lp-branch" data-principle="${i}"><summary><span class="ap-lp-number">${i+1}</span><span>${esc(title)}</span><small data-story-state></small></summary><div class="ap-lp-stories"><div data-story-list></div><button class="btn secondary" data-add-story>+ Add story</button></div></details>`).join('')}</div>`;
     root.querySelector('[data-collapse-principles]').onclick=()=>root.querySelectorAll('details').forEach(el=>el.open=false);
     root.querySelectorAll('[data-principle]').forEach(branch=>{
-      branch.ontoggle=()=>{
-        if(!branch.open)return;
-        const panel=branch.querySelector('.ap-lp-editor');
-        if(panel.querySelector('.note-edit-surface'))return;
-        const title=D.leadershipPrinciples[Number(branch.dataset.principle)];
-        const note=prep().principleStories[title] ||= {body:'',links:[]};
-        notesPanel(panel,note,'ap-principle-story',()=>{branch.querySelector('[data-story-state]').textContent='Story saved';});
-        panel.querySelector('[data-action="save-note"]').textContent='Save Story';
-        panel.querySelector('.note-edit-surface').setAttribute('data-placeholder','Write your story: situation, task, actions, and results…');
-        panel.querySelector('[data-action="close-note"]').onclick=()=>{branch.open=false;};
+      const title=D.leadershipPrinciples[Number(branch.dataset.principle)],stories=prep().principleStoryCollections[title];
+      const list=branch.querySelector('[data-story-list]');
+      const updateCount=()=>{branch.querySelector('[data-story-state]').textContent=stories.length+' '+(stories.length===1?'story':'stories');};
+      const appendStory=(story,open=false)=>{
+        const item=document.createElement('details');item.className='ap-lp-branch ap-story-branch';item.dataset.storyId=story.id;
+        item.innerHTML=`<summary><span data-story-title>${esc(story.title)}</span></summary><div class="ap-lp-editor q-note-panel open"></div>`;
+        list.appendChild(item);
+        item.ontoggle=()=>{
+          if(!item.open)return;
+          const panel=item.querySelector('.ap-lp-editor');if(panel.querySelector('.note-edit-surface'))return;
+          notesPanel(panel,story,'ap-principle-story');
+          const name=document.createElement('input');name.className='ap-story-name';name.value=story.title;name.setAttribute('aria-label','Story title');name.placeholder='Story title';panel.prepend(name);
+          name.oninput=()=>{markNearestSaveButtonDirty(panel.querySelector('.note-edit-surface'));panel.querySelector('.ap-note-status').textContent='Unsaved changes';};
+          const save=panel.querySelector('[data-action="save-note"]'),saveNote=save.onclick;save.textContent='Save Story';
+          save.onclick=()=>{story.title=name.value.trim()||'Untitled story';saveNote();item.querySelector('[data-story-title]').textContent=story.title;};
+          panel.querySelector('[data-action="close-note"]').onclick=()=>item.open=false;
+          const remove=document.createElement('button');remove.className='btn secondary';remove.type='button';remove.textContent='Delete story';
+          remove.onclick=()=>{if(!confirm('Delete this story?'))return;stories.splice(stories.indexOf(story),1);persist();item.remove();updateCount();};
+          panel.querySelector('.row-actions').appendChild(remove);
+        };
+        item.open=open;
+      };
+      stories.forEach(story=>appendStory(story));updateCount();
+      branch.querySelector('[data-add-story]').onclick=()=>{
+        const story={id:crypto.randomUUID(),title:'Story '+(stories.length+1),body:'',links:[]};stories.push(story);persist();appendStory(story,true);updateCount();
       };
     });
   }
